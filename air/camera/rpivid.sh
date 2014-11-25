@@ -1,3 +1,4 @@
+#!/bin/sh
 file=./file.sh
 process=0
 cp running.sh file.sh
