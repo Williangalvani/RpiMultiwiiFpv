@@ -25,7 +25,7 @@ while not done:
         if not stream:
             try:
                 #os.system("cd camera && sh cameraGst.sh {0}&".format(addr[0]))
-                subprocess.Popen(["sh", "cameraGst.sh"])
+                subprocess.Popen(["sh", "cameraGst.sh", "{0}".format(addr[0])])
                 stream = True
             except:
                 pass
