@@ -2,7 +2,7 @@ __author__ = 'will'
 
 import socket
 import os
-
+import subprocess
 # A UDP server
 
 # Set up a UDP server
@@ -24,7 +24,8 @@ while not done:
         print data.strip(),addr
         if not stream:
             try:
-                os.system("cd camera && sh cameraGst.sh {0}&".format(addr[0]))
+                #os.system("cd camera && sh cameraGst.sh {0}&".format(addr[0]))
+                subprocess.Popen(["sh", "cameraGst.sh"])
                 stream = True
             except:
                 pass
