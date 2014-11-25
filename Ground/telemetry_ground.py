@@ -2,11 +2,14 @@ __author__ = 'will'
 
 
 import socket
+import os
 
 # This is an example of a UDP client - it creates
 # a socket and sends data through it
 
 # create the UDP socket
+os.system("sh viewerGstPC.sh&")
+
 UDPSock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
 data = " jasjlsdfjk sdkldfkjlsd jlksfjklsd\n"

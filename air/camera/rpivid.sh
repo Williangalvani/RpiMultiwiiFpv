@@ -1,7 +1,5 @@
-#!/bin/sh
 file=./file.sh
 process=0
-cp running.sh file.sh
 while [ 1 ]; do
   if [ -f "$file" ]; then
 
