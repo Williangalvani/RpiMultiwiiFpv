@@ -21,5 +21,5 @@ addr = ("192.168.42.1", 21567)
 UDPSock.sendto(data,addr)
 
 while True:
-    time.sleep(0.1)
+    time.sleep(0.01)
     UDPSock.sendto(data,addr)
