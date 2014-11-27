@@ -7,15 +7,9 @@ import subprocess
 import time
 import threading
 import signal
-# This is an example of a UDP client - it creates
-# a socket and sends data through it
 
-# create the UDP socket
-#os.system("sh viewerGstPC.sh&")
 subprocess.Popen(["sh", "viewerGstPC.sh"])
-
 addr = ("192.168.42.1", 21567)
-
 
 # Simply set up a target address and port ...
 
@@ -33,9 +27,10 @@ class Sender(threading.Thread):
             #print data
             msg_counter += 1
             self.sock.sendto(data, addr)
-        print "done1"
+        print "ground sender finalized!"
 
     def stop(self):
+        print "trying to finalize ground sender..."
         self.running = False
 
 
@@ -45,17 +40,17 @@ class Receiver(threading.Thread):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         listen_addr = ("", 21567)
         self.sock.bind(listen_addr)
-        self.sock.setblocking(0)
+        #self.sock.setblocking(0)
         self.running = True
 
     def run(self):
         while self.running:
-            #print 'asd'
             data, addr = self.sock.recvfrom(1024)
             print "received:", data.strip(), addr
-        print "done2"
+        print "finalized ground receiver"
 
     def stop(self):
+        print "trying to finalize ground receiver"
         self.running = False
 
 sender = Sender()

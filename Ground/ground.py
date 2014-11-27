@@ -3,9 +3,10 @@
 #   ! \ rtph264depay ! ffdec_h264 ! xvimagesink sync=false
 
 import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import GObject, Gst, Gtk
 
+gi.require_version('Gst', '1.0')
+from gi.repository import GObject, Gst, GdkPixbuf
+from gi.repository import Gtk
 # Needed for window.get_xid(), xvimagesink.set_window_handle(), respectively:
 from gi.repository import GdkX11, GstVideo
 
@@ -18,10 +19,35 @@ class Webcam:
     def __init__(self):
         self.window = Gtk.Window()
         self.window.connect('destroy', self.quit)
-        self.window.set_default_size(800, 450)
+        self.window.set_default_size(1366, 768)
 
-        self.drawingarea = Gtk.DrawingArea()
-        self.window.add(self.drawingarea)
+        self.overlay = Gtk.Overlay()
+        self.window.add(self.overlay)
+        self.overlay.show()
+        self.videowidget = Gtk.DrawingArea()
+        self.overlay.add(self.videowidget)
+        self.videowidget.set_halign (Gtk.Align.START)
+        self.videowidget.set_valign (Gtk.Align.START)
+        self.videowidget.set_size_request(*self.window.get_size())
+        self.videowidget.show()
+
+        self.fixed = Gtk.Fixed()
+        self.fixed.set_halign(Gtk.Align.START)
+        self.fixed.set_valign(Gtk.Align.START)
+
+        self.overlay.add_overlay(self.fixed)
+        self.fixed.show()
+
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size("das_.png", 500, 500)
+        imgMPL = Gtk.Image()
+        print dir(self.pixbuf), self.pixbuf.get_has_alpha()
+        imgMPL.set_from_pixbuf(self.pixbuf)
+        #eb_imgMPL = Gtk.EventBox()
+        #eb_imgMPL.set_visible_window(False)
+        #eb_imgMPL.add(eb_imgMPL)
+        self.fixed.put(imgMPL, 0,0)
+        imgMPL.show()
+
 
         # Create GStreamer pipeline
         self.pipeline = Gst.Pipeline()
@@ -60,7 +86,13 @@ class Webcam:
         self.decode.link(self.convert)
         self.convert.link(self.sink)
 
-        
+        source_id = GObject.timeout_add(100,self.draw)
+
+    def draw(self):
+        print "drawing"
+        self.videowidget.draw_line(self.videowidget.new_gc(), 0, 0, 100, 100)
+
+        GObject.timeout_add(100,self.draw)
 
     def on_pad_added(self, element, pad):
         if "video" in name:
@@ -73,7 +105,7 @@ class Webcam:
         # You need to get the XID after window.show_all().  You shouldn't get it
         # in the on_sync_message() handler because threading issues will cause
         # segfaults there.
-        self.xid = self.drawingarea.get_property('window').get_xid()
+        self.xid = self.videowidget.get_property('window').get_xid()
         self.pipeline.set_state(Gst.State.PLAYING)
         Gtk.main()
 
@@ -82,6 +114,7 @@ class Webcam:
         Gtk.main_quit()
 
     def on_sync_message(self, bus, msg):
+        print "syncing"
         if msg.get_structure().get_name() == 'prepare-window-handle':
             print('prepare-window-handle')
             msg.src.set_property('force-aspect-ratio', True)
@@ -89,6 +122,7 @@ class Webcam:
 
     def on_error(self, bus, msg):
         print('on_error():', msg.parse_error())
+
 
 
 webcam = Webcam()

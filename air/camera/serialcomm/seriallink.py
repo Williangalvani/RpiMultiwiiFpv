@@ -45,7 +45,7 @@ class TelemetryReader():
                 try:
                     while self.run:
                             self.attitude = self.read_attitude()
-                            print self.attitude
+                            # print self.attitude
                             #self.window.set_attitude(*self.attitude)
                             time.sleep(0.05)
                 except Exception, e:
