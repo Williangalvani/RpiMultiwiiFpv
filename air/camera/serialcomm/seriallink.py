@@ -125,8 +125,7 @@ class TelemetryReader():
             print ('lost packet!')
             return None
 
-
-    def MSPquery(self,command    ):
+    def MSPquery(self, command):
             #self.ser.flushInput()
             o = bytearray('$M<')
             #print dir(o)
@@ -137,15 +136,13 @@ class TelemetryReader():
             c ^= o[4]
             o += chr(c)
             answer = None
-            while (not answer):
+            while not answer:
                     #print "writing" , o
                     self.ser.write(o)
                     #self.ser.flushInput()
                     answer = self.receiveAnswer(command)
             #print answer
             return answer
-
-
 
     def decode32(self, data):
         #print data
@@ -190,11 +187,6 @@ class TelemetryReader():
 
 reader = None
 
-def exit_gracefully(signum, frame):
-    print "trying to stop"
-    reader.stop()
 
-
-signal.signal(signal.SIGINT, exit_gracefully)
-reader = TelemetryReader()
-time.sleep(10)
+# reader = TelemetryReader()
+# time.sleep(10)
