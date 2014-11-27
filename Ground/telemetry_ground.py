@@ -13,13 +13,13 @@ import time
 subprocess.Popen(["sh", "viewerGstPC.sh"])
 UDPSock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
-data = " jasjlsdfjk sdkldfkjlsd jlksfjklsd\n"
+
 
 # Simply set up a target address and port ...
 addr = ("192.168.42.1", 21567)
-# ... and send data out to it!
-UDPSock.sendto(data,addr)
-
+msg_counter = 1
 while True:
     time.sleep(0.01)
+    data = "msg {0}".format(msg_counter)
+    msg_counter += 1
     UDPSock.sendto(data,addr)
