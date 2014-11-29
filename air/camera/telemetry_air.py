@@ -30,7 +30,7 @@ class Sender(threading.Thread):
            # print "running"
             if self.receiver.addr:
                 time.sleep(0.01)
-                data = "msg {0}".format(self.serial.attitude)
+                data = "att {0}".format(self.serial.attitude)
                 #print data
                 msg_counter += 1
                 if not self.addr:

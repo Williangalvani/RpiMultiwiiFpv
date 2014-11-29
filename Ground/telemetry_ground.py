@@ -8,10 +8,11 @@ import time
 import threading
 import signal
 
-subprocess.Popen(["sh", "viewerGstPC.sh"])
+# subprocess.Popen(["sh", "viewerGstPC.sh"])
 addr = ("192.168.42.1", 21567)
 
 # Simply set up a target address and port ...
+
 
 class Sender(threading.Thread):
     def __init__(self):
@@ -42,33 +43,43 @@ class Receiver(threading.Thread):
         self.sock.bind(listen_addr)
         #self.sock.setblocking(0)
         self.running = True
+        self.data = {}
 
     def run(self):
         while self.running:
             data, addr = self.sock.recvfrom(1024)
-            print "received:", data.strip(), addr
+            #print "received:", data.strip(), addr
+            self.treatData(data.strip())
+
         print "finalized ground receiver"
+
+
+    def treatData(self, string):
+        if 'att' in string:
+            #print "got attitude", string
+            self.data['attitude'] = string
+        #print self.data
 
     def stop(self):
         print "trying to finalize ground receiver"
         self.running = False
 
-sender = Sender()
-receiver = Receiver()
-sender.start()
-receiver.start()
-run = True
-
-def exit_gracefully(signum, frame):
-    print "trying to stop"
-    global run
-    run = False
-    sender.stop()
-    receiver.stop()
-    sender.join()
-    receiver.join()
-
-signal.signal(signal.SIGINT, exit_gracefully)
-
-while run:
-    time.sleep(1)
+# sender = Sender()
+# receiver = Receiver()
+# sender.start()
+# receiver.start()
+# run = True
+#
+# def exit_gracefully(signum, frame):
+#     print "trying to stop"
+#     global run
+#     run = False
+#     sender.stop()
+#     receiver.stop()
+#     sender.join()
+#     receiver.join()
+#
+# signal.signal(signal.SIGINT, exit_gracefully)
+#
+# while run:
+#     time.sleep(1)

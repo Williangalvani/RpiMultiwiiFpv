@@ -25,6 +25,7 @@ class Overlay (Gtk.Window):
         self.set_modal(True)
         self.set_keep_above(True)
         self.timer = 0
+        self.receiver = None
         img_size = (0,0)
 
         try:
@@ -59,7 +60,7 @@ class Overlay (Gtk.Window):
         self.connect("draw", self.draw)
         box.connect("button-press-event", self.close)
         self.show_all()
-        GObject.timeout_add(1000, self.timer_func)
+        GObject.timeout_add(100, self.timer_func)
 
     def draw(self, widget, cr):
         """Set transparent background"""
@@ -67,6 +68,9 @@ class Overlay (Gtk.Window):
         cr.set_operator(cairo.OPERATOR_SOURCE)
         cr.paint()
         cr.set_operator(cairo.OPERATOR_OVER)
+
+    def setReceiver(self,receiver):
+        self.receiver = receiver
 
     def close(self, widget, event):
         """Finish Programm on double-click"""
@@ -87,15 +91,10 @@ class Overlay (Gtk.Window):
 
     def get_text(self):
         """Get text and return it"""
-        try:
-            req = urllib2.Request(texturl)
-            res = urllib2.urlopen(req)
-            if (res.code==200):
-                return res.read()
-            else:
-                return None
-        except:
-            return None
+        if 'attitude' in self.receiver.data:
+            return """<span font="Arial Black 20" foreground="white"> Attitude:{0}</span>""".format(self.receiver.data['attitude'])
+        else:
+            return '---'
 
     def update_image(self):
         """Update image"""
@@ -106,31 +105,26 @@ class Overlay (Gtk.Window):
             pass
         else:
             img_size = (pixbuf.get_width(), pixbuf.get_height())
-            self.move(10, self.screen.get_height()-img_size[1]-20)
+            # self.move(10, self.screen.get_height()-img_size[1]-20)
             self.image.set_from_file("banner.png")
 
     def update_text(self):
         """Update text"""
         text = self.get_text()
+
         if text is not None:
             self.label.set_markup(text)
 
     def timer_func(self):
         """Callback function for timer"""
-        print "timer"
-        if self.timer%300 == 0:
-            self.update_text()
-            self.update_image()
+        self.update_text()
+        # self.update_image()
+        GObject.timeout_add(100, self.timer_func)
 
-        if self.timer>1000000:
-            self.timer = 0
-
-        self.timer = self.timer+1
-        return True
 
 weatherurl = "http://31.44.177.1/weather"
 texturl = "http://31.44.177.1/gettext"
-# app = MyWin()
+# app = Overlay()
 # Gtk.main()
-
+#
 

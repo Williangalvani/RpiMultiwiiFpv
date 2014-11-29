@@ -102,11 +102,9 @@ class Video (Gtk.Window):
 
 weatherurl = "http://31.44.177.1/weather"
 texturl = "http://31.44.177.1/gettext"
-
-overlay = Overlay()
-
-
-webcam = Video()
-
-webcam.run()
-Gtk.main()
+#
+# overlay = Overlay()
+#
+# webcam = Video()
+#
+# webcam.run()
