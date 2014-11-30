@@ -7,6 +7,7 @@ import cairo
 from gi.repository import Gtk
 from gi.repository import Gdk
 from gi.repository import GObject
+from math import sin,cos,radians
 
 class Overlay (Gtk.Window):
     xangle = 53
@@ -62,12 +63,40 @@ class Overlay (Gtk.Window):
         self.draw_horizon(cr)
 
     def draw_horizon(self,cr):
-        width, height = self.get_size()
+        self.width, self.height = self.get_size()
+        self.midx = self.width/2
+        self.midy = self.height/2
+
+        try:
+            roll= radians(self.receiver.data['attitude'][0])
+        except:
+            roll=0
+
+        #print roll
+        length = 400.0
+        height = sin(roll)*length
+        width = cos(roll)*length
+        print height
         cr.set_source_rgba(255, 255, 255, 255)
         cr.set_line_width(2)
-        cr.move_to(0, 0)
-        cr.line_to(width, height)
+        cr.move_to(self.midx - width/2, self.midy-height/2)
+        cr.line_to(self.midx +width/2, self.midy+height/2)
         cr.stroke()
+
+
+        self.draw_cross(cr)
+
+
+        cr.stroke()
+
+
+    def draw_cross(self,cr):
+        cr.set_source_rgba(255, 255, 255, 255)
+        cr.set_line_width(1)
+        cr.move_to(self.midx - 50, self.midy)
+        cr.line_to(self.midx + 50, self.midy)
+        cr.stroke()
+
 
 
     def close(self, widget, event):
@@ -90,6 +119,7 @@ class Overlay (Gtk.Window):
     def update_overlay(self):
         """Callback function for timer"""
         self.update_text()
+        self.queue_draw()
         # self.update_image()
         GObject.timeout_add(100, self.update_overlay)
 
