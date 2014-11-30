@@ -9,7 +9,7 @@ from gi.repository import Gdk
 from gi.repository import GObject
 from gi.repository.GdkPixbuf import Pixbuf
 import urllib2
-
+from hud_renderer import HudRenderer
 
 class Overlay (Gtk.Window):
     def __init__(self, receiver):
@@ -29,7 +29,7 @@ class Overlay (Gtk.Window):
         self.set_opacity(0.8)
         # self.set_modal(True)
         self.set_keep_above(True)
-
+        self.textRenderer = HudRenderer(self.receiver)
         self.update_image()
         self.update_text()
 
@@ -81,11 +81,7 @@ class Overlay (Gtk.Window):
             return None
 
     def get_text(self):
-        """Get text and return it"""
-        if 'attitude' in self.receiver.data:
-            return """<span font="Arial Black 20" foreground="white"> Attitude:{0}</span>""".format(self.receiver.data['attitude'])
-        else:
-            return '---'
+        return self.textRenderer.get_screen()
 
     def update_image(self):
         """Update image"""

@@ -6,7 +6,7 @@ import signal
 import threading
 import time
 
-from Air.serialcomm.seriallink import TelemetryReader
+from serialcomm.seriallink import TelemetryReader
 
 
 print "Socket open, waiting for connection"
