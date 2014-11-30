@@ -62,6 +62,11 @@ class Overlay (Gtk.Window):
         cr.set_operator(cairo.OPERATOR_SOURCE)
         cr.paint()
         cr.set_operator(cairo.OPERATOR_OVER)
+        cr.set_source_rgba(255, 255, 255, 255)
+        cr.set_line_width(2)
+        cr.move_to(0, 0)
+        cr.line_to(100, 100)
+        cr.stroke()
 
     def close(self, widget, event):
         """Finish Programm on double-click"""
