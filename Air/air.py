@@ -5,7 +5,7 @@ import subprocess
 import signal
 import threading
 import time
-
+import cPickle as pkl
 from serialcomm.seriallink import TelemetryReader
 
 
@@ -30,7 +30,7 @@ class Sender(threading.Thread):
            # print "running"
             if self.receiver.addr:
                 time.sleep(0.01)
-                data = "att {0}".format(self.serial.attitude)
+                data = "att >{0}".format(pkl.dumps(self.serial.attitude))
                 #print data
                 msg_counter += 1
                 if not self.addr:
@@ -80,6 +80,7 @@ receiver = Receiver()
 receiver.start()
 sender = Sender(reader, receiver)
 sender.start()
+
 
 def exit_gracefully(signum, frame):
     print "trying to stop threads..."

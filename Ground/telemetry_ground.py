@@ -8,11 +8,12 @@ import time
 import threading
 import signal
 
-addr = ("192.168.42.1", 21567)
+import cPickle as pkl
 
 class Sender(threading.Thread):
-    def __init__(self):
+    def __init__(self, ip):
         threading.Thread.__init__(self)
+        self.addr = (ip, 21567)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.running = True
 
@@ -23,7 +24,7 @@ class Sender(threading.Thread):
             data = "msg {0}".format(msg_counter)
             #print data
             msg_counter += 1
-            self.sock.sendto(data, addr)
+            self.sock.sendto(data, self.addr)
         print "ground sender finalized!"
 
     def stop(self):
@@ -49,9 +50,9 @@ class Receiver(threading.Thread):
 
 
     def treatData(self, string):
-        if 'att' in string:
+        if string.startswith("att"):
             #print "got attitude", string
-            self.data['attitude'] = string
+            self.data['attitude'] = pkl.loads(string.split(">", 1)[1])
         #print self.data
 
     def stop(self):

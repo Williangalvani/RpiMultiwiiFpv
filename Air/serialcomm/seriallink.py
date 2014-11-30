@@ -1,4 +1,4 @@
-from Air.serialcomm.messages import *
+from serialcomm.messages import *
 #from protocol import *
 import serial
 import time

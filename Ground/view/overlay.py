@@ -7,15 +7,15 @@ import cairo
 from gi.repository import Gtk
 from gi.repository import Gdk
 from gi.repository import GObject
-from gi.repository.GdkPixbuf import Pixbuf
-import urllib2
-from hud_renderer import HudRenderer
 
 class Overlay (Gtk.Window):
+    xangle = 53
+    yangle = 40
     def __init__(self, receiver):
         super(Overlay, self).__init__(Gtk.WindowType(1))
         self.receiver = receiver
 
+        self.set_default_size(1366, 768)
         #overlay transparency
         self.screen = self.get_screen()
         self.visual = self.screen.get_rgba_visual()
@@ -23,14 +23,12 @@ class Overlay (Gtk.Window):
             self.set_visual(self.visual)
 
         self.set_position(Gtk.WindowPosition.CENTER)
-        # self.set_decorated(True)
-        self.image = Gtk.Image()
+
         self.label = Gtk.Label()
         self.set_opacity(0.8)
         # self.set_modal(True)
         self.set_keep_above(True)
-        self.textRenderer = HudRenderer(self.receiver)
-        self.update_image()
+
         self.update_text()
 
         self.label.show()
@@ -40,7 +38,6 @@ class Overlay (Gtk.Window):
         ebox = Gtk.EventBox()
         align = Gtk.Alignment()
         align.set_valign(1)
-        align.add(self.image)
         ebox.set_visible_window(False)
         ebox.add(align)
         box.pack_start(ebox, False, False, 0)
@@ -62,36 +59,27 @@ class Overlay (Gtk.Window):
         cr.set_operator(cairo.OPERATOR_SOURCE)
         cr.paint()
         cr.set_operator(cairo.OPERATOR_OVER)
+        self.draw_horizon(cr)
+
+    def draw_horizon(self,cr):
+        width, height = self.get_size()
         cr.set_source_rgba(255, 255, 255, 255)
         cr.set_line_width(2)
         cr.move_to(0, 0)
-        cr.line_to(100, 100)
+        cr.line_to(width, height)
         cr.stroke()
+
 
     def close(self, widget, event):
         """Finish Programm on double-click"""
         if event.type == Gdk.EventType._2BUTTON_PRESS:
             Gtk.main_quit()
 
-    def get_image(self):
-        """Download image and save it to file"""
-        try:
-            req = urllib2.Request(weatherurl)
-            res = urllib2.urlopen(req)
-            if (res.code==200):
-                f = open("banner.png", "w")
-                f.write(res.read())
-                f.close()
-        except:
-            return None
-
     def get_text(self):
-        return self.textRenderer.get_screen()
-
-    def update_image(self):
-        """Update image"""
-        self.get_image()
-        self.image.set_from_file("banner.png")
+        if 'attitude' in self.receiver.data:
+            return """<span font="Arial Black 20" foreground="white"> Attitude:{0}</span>""".format(self.receiver.data['attitude'])
+        else:
+            return '---'
 
     def update_text(self):
         """Update text"""
@@ -104,9 +92,4 @@ class Overlay (Gtk.Window):
         self.update_text()
         # self.update_image()
         GObject.timeout_add(100, self.update_overlay)
-
-
-weatherurl = "http://31.44.177.1/weather"
-texturl = "http://31.44.177.1/gettext"
-
 
