@@ -1,12 +1,12 @@
 __author__ = 'will'
 
 import socket
-import os
 import subprocess
-from serialcomm.seriallink import TelemetryReader
 import signal
 import threading
 import time
+
+from Air.serialcomm.seriallink import TelemetryReader
 
 
 print "Socket open, waiting for connection"

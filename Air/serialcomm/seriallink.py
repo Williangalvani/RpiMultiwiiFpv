@@ -1,10 +1,7 @@
-from messages import *
-from serial.tools import list_ports
-import os
+from Air.serialcomm.messages import *
 #from protocol import *
 import serial
 import time
-import signal
 import threading
 
 class FuncThread(threading.Thread):
