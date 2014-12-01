@@ -11,7 +11,7 @@ from math import sin,cos,radians
 
 class Overlay (Gtk.Window):
     xangle = 53
-    yangle = 40
+    yangle = 22
     def __init__(self, receiver):
         super(Overlay, self).__init__(Gtk.WindowType(1))
         self.receiver = receiver
@@ -69,18 +69,21 @@ class Overlay (Gtk.Window):
 
         try:
             roll= radians(self.receiver.data['attitude'][0])
+            pitch= self.receiver.data['attitude'][1]
         except:
             roll=0
+            pitch = 0
 
         #print roll
+        horizon_y = self.midy - self.height * pitch/self.yangle
         length = 400.0
         height = sin(roll)*length
         width = cos(roll)*length
-        print height
+        #print height, horizon_y, self.height, pitch, self.yangle
         cr.set_source_rgba(255, 255, 255, 255)
         cr.set_line_width(2)
-        cr.move_to(self.midx - width/2, self.midy-height/2)
-        cr.line_to(self.midx +width/2, self.midy+height/2)
+        cr.move_to(self.midx - width/2, horizon_y+height/2)
+        cr.line_to(self.midx +width/2, horizon_y-   height/2)
         cr.stroke()
 
 
@@ -121,5 +124,5 @@ class Overlay (Gtk.Window):
         self.update_text()
         self.queue_draw()
         # self.update_image()
-        GObject.timeout_add(100, self.update_overlay)
+        GObject.timeout_add(50, self.update_overlay)
 

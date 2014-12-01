@@ -59,7 +59,8 @@ class Receiver(threading.Thread):
         while self.running:
                 data, addr = self.sock.recvfrom(1024)
                 self.addr = addr[0]
-                print data.strip(), addr
+                time.sleep(0.01)
+                # print data.strip(), addr
                 # UDPSock.sendto("{0}".format(reader.attitude), (addr[0], 21567))
                 if not self.stream:
                     try:
