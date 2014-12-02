@@ -74,6 +74,13 @@ class Overlay (Gtk.Window):
             roll=0
             pitch = 0
 
+        def line_from_to(cr,x1,y1,x2,y2):
+            cr.set_source_rgba(255, 255, 255, 255)
+            cr.set_line_width(2)
+            cr.move_to(x1,y1)
+            cr.line_to(x2,y2)
+            cr.stroke()
+
         #print roll
         horizon_y = self.midy - self.height * pitch/self.yangle
         length = 400.0
@@ -82,13 +89,34 @@ class Overlay (Gtk.Window):
         #print height, horizon_y, self.height, pitch, self.yangle
         cr.set_source_rgba(255, 255, 255, 255)
         cr.set_line_width(2)
-        cr.move_to(self.midx - width/2, horizon_y+height/2)
-        cr.line_to(self.midx +width/2, horizon_y-   height/2)
-        cr.stroke()
+        line_from_to(cr,
+                     self.midx - width/2, horizon_y + height/2,
+                     self.midx + width/2, horizon_y - height/2)
+
+
+        cr.set_dash([10])
+        cr.select_font_face("Lucida Typewriter", cairo.FONT_SLANT_NORMAL,
+                cairo.FONT_WEIGHT_NORMAL)
+        cr.set_font_size(20)
+
+        for i in range(-10,10):
+            y = horizon_y + 10.0/self.yangle * i * self.height
+            if 0 < y < self.height:
+                points = [self.midx - width/2, y + height/2,
+                             self.midx + width/2, y - height/2]
+                line_from_to(cr, *points)
+
+                cr.move_to(points[0]-40,points[1])
+                cr.show_text("{0}".format(-i*10))
+                cr.move_to(points[2],points[3])
+                cr.show_text("{0}".format(-i*10))
+                cr.stroke()
+        cr.set_dash([])
+
+
 
 
         self.draw_cross(cr)
-
 
         cr.stroke()
 
