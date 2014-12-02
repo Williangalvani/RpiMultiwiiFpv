@@ -74,18 +74,26 @@ class TelemetryReader():
         time.sleep(0.001)
         command = None
         size = 0
+        start = time.time()
         while command != expectedCommand:
+            #print "waiting command"
+            if time.time()> start+0.5:
+                print "timeout"
+                return None
             if len(self.buffer) > 15:
                 self.buffer = "$M>" + self.buffer.rsplit("$M>", 1)[-1]
             header = "000"
             #print self.buffer
             while "$M>" not in header:
-                #print "waiting header", header
+                #print "waiting header"
+                if time.time()> start+0.5:
+                    print "timeout"
+                    return None
                 new = ""
                 try:
                     new = self.ser.read(1)
                 except serial.SerialTimeoutException:
-                    print "timeout!"
+                    #   print "timeout!"
                     return None
                 header += new
                 if len(header) > 3:
