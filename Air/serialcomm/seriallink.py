@@ -5,6 +5,7 @@ import time
 import threading
 
 class FuncThread(threading.Thread):
+
     def __init__(self, target, *args):
         self._target = target
         self._args = args
