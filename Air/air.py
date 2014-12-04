@@ -7,7 +7,7 @@ import threading
 import time
 import cPickle as pkl
 from serialcomm.seriallink import TelemetryReader
-
+from rssi import read_rssi
 
 print "Socket open, waiting for connection"
 
@@ -15,7 +15,7 @@ print "Socket open, waiting for connection"
 done = False
 
 class Sender(threading.Thread):
-    def __init__(self, serial,receiver):
+    def __init__(self, serial, receiver):
         threading.Thread.__init__(self)
         self.serial = serial
         self.receiver = receiver
@@ -27,16 +27,19 @@ class Sender(threading.Thread):
     def run(self):
         msg_counter = 1
         while self.running:
-           # print "running"
             if self.receiver.addr:
+                if not self.addr:
+                    self.addr = (self.receiver.addr, 21567)
+
                 time.sleep(0.01)
                 data = "att >{0}".format(pkl.dumps(self.serial.attitude))
-                #print data
                 msg_counter += 1
-                if not self.addr:
-                    self.addr = (self.receiver.addr,21567)
-                    print self.addr
-                self.sock.sendto(data, (self.receiver.addr,21567))
+                self.sock.sendto(data, (self.receiver.addr, 21567))
+
+                if msg_counter % 50 == 0:
+                    data = "rssi >{0}".format(pkl.dumps(read_rssi()))
+
+
         print "air sender finalized!"
 
     def stop(self):

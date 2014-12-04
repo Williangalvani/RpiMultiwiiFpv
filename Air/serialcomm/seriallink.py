@@ -1,4 +1,4 @@
-from serialcomm.messages import *
+from messages import *
 #from protocol import *
 import serial
 import time
@@ -52,25 +52,6 @@ class TelemetryReader():
     def stop(self):
         self.run = False
 
-
-    # def list_serial_ports(self):
-    #     # Windows
-    #     if os.name == 'nt':
-    #         # Scan for available ports.
-    #         available = []
-    #         for i in range(256):
-    #             try:
-    #                 s = serial.Serial(i)
-    #                 available.append('COM'+str(i + 1))
-    #                 s.close()
-    #             except serial.SerialException:
-    #                 pass
-    #         return available
-    #     else:
-    #         # Mac / Linux
-    #         print [port[0] for port in list_ports.comports ()]
-    #         return [port[0] for port in list_ports.comports ()]
-
     def receiveAnswer(self, expectedCommand):
         time.sleep(0.001)
         command = None
@@ -87,7 +68,7 @@ class TelemetryReader():
             #print self.buffer
             while "$M>" not in header:
                 #print "waiting header"
-                if time.time()> start+0.5:
+                if time.time() > start+0.5:
                     print "timeout"
                     return None
                 new = ""
@@ -112,10 +93,6 @@ class TelemetryReader():
         for i in data:
             checksum ^= i
         receivedChecksum = ord(self.ser.read())
-        #print 'command' , command
-        #print 'size' , size
-        #print 'data' , data
-        #print checksum, receivedChecksum
         if command != expectedCommand:
             print( "commands dont match!", command, expectedCommand, len(self.buffer))
             if receivedChecksum == checksum:          # was not supposed to arrive now, but data is data!
@@ -125,16 +102,13 @@ class TelemetryReader():
                 pass
             return None
         if checksum == receivedChecksum:
-            #print data
             return data
         else:
             print ('lost packet!')
             return None
 
     def MSPquery(self, command):
-            #self.ser.flushInput()
             o = bytearray('$M<')
-            #print dir(o)
             c = 0
             o += chr(0)
             c ^= o[3]       #no payload
@@ -143,11 +117,8 @@ class TelemetryReader():
             o += chr(c)
             answer = None
             while not answer:
-                    #print "writing" , o
                     self.ser.write(o)
-                    #self.ser.flushInput()
                     answer = self.receiveAnswer(command)
-            #print answer
             return answer
 
     def decode32(self, data):
@@ -177,7 +148,7 @@ class TelemetryReader():
             longitude = self.decode32(long_list)/10000000.0
             #print longitude,latitude
             return longitude, latitude
-        return (0,0)
+        return 0, 0
 
     def read_attitude(self):
         #print "requesting attitude"
