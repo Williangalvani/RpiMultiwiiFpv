@@ -38,7 +38,9 @@ class Sender(threading.Thread):
 
                 if msg_counter % 50 == 0:
                     data = "rssi >{0}".format(pkl.dumps(read_rssi()))
-
+                    self.sock.sendto(data, (self.receiver.addr, 21567))
+            else:
+                time.sleep(0.5)
 
         print "air sender finalized!"
 

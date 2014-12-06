@@ -53,7 +53,8 @@ class Receiver(threading.Thread):
         if string.startswith("att"):
             #print "got attitude", string
             self.data['attitude'] = pkl.loads(string.split(">", 1)[1])
-        #print self.data
+        else:
+            print string
 
     def stop(self):
         print "trying to finalize ground receiver"
