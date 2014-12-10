@@ -16,14 +16,13 @@ class Overlay (Gtk.Window):
     width = 0
     screen_mid_x = 0
     screen_mid_y = 0
-    compass_x = 200
-    compass_y = 200
+    compass_x_off = 100
+    compass_y_off = 200
 
 
     def __init__(self, receiver):
         super(Overlay, self).__init__(Gtk.WindowType(1))
         self.receiver = receiver
-
         self.set_default_size(1366, 768)
 
         #overlay transparency
@@ -78,17 +77,27 @@ class Overlay (Gtk.Window):
         cr.stroke()
 
     def draw_compass(self, cr):
-        cr.move_to(self.compass_x, self.compass_y)
+        #cr.move_to(self.compass_x, self.compass_y)
         try:
-            yaw = radians(self.receiver.get('attitude')[2])
+            yaw = -radians(self.receiver.get('attitude')[2])
         except:
             return
-        yoff = sin(yaw)*20
-        xoff = cos(yaw)*20
 
-        cr.arc(self.compass_x,self.compass_y,20,0,2*pi)
-        cr.line_to(self.compass_x+xoff,
-                   self.compass_y+yoff)
+        compass_x = self.width - self.compass_x_off
+        compass_y = self.compass_y_off
+
+        yoff = sin(yaw)*50
+        xoff = cos(yaw)*50
+        cr.set_line_width(2)
+        cr.arc(compass_x, compass_y, 50, 0, 2*pi)
+        cr.move_to(compass_x,
+                   compass_y)
+        cr.line_to(compass_x+xoff,
+                   compass_y+yoff)
+
+        cr.move_to(compass_x+xoff*1.4 - 10,
+                   compass_y+yoff*1.3 + 10)
+        cr.show_text("N")
         cr.stroke()
 
     def draw_horizon(self, cr):
