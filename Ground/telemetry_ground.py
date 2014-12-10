@@ -11,19 +11,44 @@ import signal
 import cPickle as pkl
 
 class Sender(threading.Thread):
+
     def __init__(self, ip):
         threading.Thread.__init__(self)
         self.addr = (ip, 21567)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.running = True
+        self.msg_counter = 0
+
+        self.requested = [] # special messages on request
+        self.periodic = [('counter', self.counter),
+                         ('rc', self.get_rc)]  # regular messages, sent one each cycle
+        self.len_periodics = len(self.periodic)
+
+
+    def counter(self):
+        self.msg_counter+=1
+        return self.msg_counter
+
+    def get_rc(self):
+        return [1500 for i in range(8)]
 
     def run(self):
-        msg_counter = 1
         while self.running:
             time.sleep(0.01)
-            data = "msg {0}".format(msg_counter)
+            if self.requested:
+                name, lista = self.requested.pop(0)
+                lista2 = lista()
+                dict = {name: lista2}
+                data = "req >{0}".format(pkl.dumps(dict))
+
+            else:
+                name, lista = self.periodic[self.msg_counter % self.len_periodics]
+                lista2 = lista()
+                dict = {name: lista2}
+                data = "req >{0}".format(pkl.dumps(dict))
+
             #print data
-            msg_counter += 1
+            self.msg_counter += 1
             self.sock.sendto(data, self.addr)
         print "ground sender finalized!"
 
@@ -53,8 +78,18 @@ class Receiver(threading.Thread):
         if string.startswith("att"):
             #print "got attitude", string
             self.data['attitude'] = pkl.loads(string.split(">", 1)[1])
+
+        elif string.startswith("rssi"):
+            self.data['RSSI'] = pkl.loads(string.split(">", 1)[1])
         else:
             print string
+
+
+    def get(self, key):
+        if key in self.data:
+            return self.data[key]
+        else:
+            return None
 
     def stop(self):
         print "trying to finalize ground receiver"

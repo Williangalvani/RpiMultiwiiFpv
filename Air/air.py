@@ -50,7 +50,7 @@ class Sender(threading.Thread):
 
 
 class Receiver(threading.Thread):
-    def __init__(self):
+    def __init__(self, serial):
         threading.Thread.__init__(self)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         listen_addr = ("", 21567)
@@ -59,13 +59,16 @@ class Receiver(threading.Thread):
         self.stream = False
         self.addr = None
         self.setDaemon(True)
+        self.data = {}
+        self.serial = serial
 
     def run(self):
         while self.running:
                 data, addr = self.sock.recvfrom(1024)
                 self.addr = addr[0]
                 time.sleep(0.01)
-                # print data.strip(), addr
+                self.treatData(data)
+
                 # UDPSock.sendto("{0}".format(reader.attitude), (addr[0], 21567))
                 if not self.stream:
                     try:
@@ -77,12 +80,26 @@ class Receiver(threading.Thread):
                         pass
         print "air receiver finalized!"
 
+    def treatData(self, string):
+        data = None
+        if string.startswith("req"):
+            data = pkl.loads(string.split(">", 1)[1])
+        elif string.startswith("per"):
+            data = pkl.loads(string.split(">", 1)[1])
+        else:
+            print string
+
+        if 'counter' in data:
+            print data
+        elif 'rc' in data:
+            self.serial.queue_rc(data['rc'])
+
     def stop(self):
         print "trying to stop air receiver..."
         self.running = False
 
 reader = TelemetryReader()
-receiver = Receiver()
+receiver = Receiver(reader)
 receiver.start()
 sender = Sender(reader, receiver)
 sender.start()

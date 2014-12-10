@@ -7,7 +7,7 @@ import cairo
 from gi.repository import Gtk
 from gi.repository import Gdk
 from gi.repository import GObject
-from math import sin,cos,radians
+from math import sin,cos,radians, pi
 
 class Overlay (Gtk.Window):
     lens_x_angle = 53
@@ -16,6 +16,9 @@ class Overlay (Gtk.Window):
     width = 0
     screen_mid_x = 0
     screen_mid_y = 0
+    compass_x = 200
+    compass_y = 200
+
 
     def __init__(self, receiver):
         super(Overlay, self).__init__(Gtk.WindowType(1))
@@ -66,6 +69,27 @@ class Overlay (Gtk.Window):
         cr.paint()
         cr.set_operator(cairo.OPERATOR_OVER)
         self.draw_horizon(cr)
+        self.draw_rssi(cr)
+        self.draw_compass(cr)
+
+    def draw_rssi(self, cr):
+        cr.move_to(self.width-120, 50)
+        cr.show_text("Wi-FI:{0}%".format(self.receiver.get('RSSI')))
+        cr.stroke()
+
+    def draw_compass(self, cr):
+        cr.move_to(self.compass_x, self.compass_y)
+        try:
+            yaw = radians(self.receiver.get('attitude')[2])
+        except:
+            return
+        yoff = sin(yaw)*20
+        xoff = cos(yaw)*20
+
+        cr.arc(self.compass_x,self.compass_y,20,0,2*pi)
+        cr.line_to(self.compass_x+xoff,
+                   self.compass_y+yoff)
+        cr.stroke()
 
     def draw_horizon(self, cr):
         """Draws horizon lines on screen """

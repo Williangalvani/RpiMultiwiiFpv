@@ -26,6 +26,9 @@ class TelemetryReader():
         self.attitude = [0, 0, 0]
         self.buffer = ""
         self.ser = None
+        self.requested = []  # special messages on request
+        self.periodic = [(self.read_attitude, None), ]   # regular messages, sent one each cycle
+        self.msg_counter = 0
 
     def loop(self):
         print "starting loop"
@@ -42,7 +45,13 @@ class TelemetryReader():
             if self.connected:
                 try:
                     while self.run:
-                            self.attitude = self.read_attitude()
+                        if self.requested:
+                            function, params = self.requested.pop(0)
+                            function(params)
+
+                        else:
+                            function, params = self.periodic[self.msg_counter]
+                            function(params)
                             # print self.attitude
                             #self.window.set_attitude(*self.attitude)
                             time.sleep(0.05)
@@ -52,14 +61,21 @@ class TelemetryReader():
     def stop(self):
         self.run = False
 
+    def queue_rc(self, rc_list):
+        self.requested.append((self.write_rc, rc_list))
+
+    def write_rc(self, rc_list):
+        self.MSPquery16d(MSP_SET_RAW_RC, rc_list)
+
+
     def receiveAnswer(self, expectedCommand):
         time.sleep(0.001)
         command = None
         size = 0
         start = time.time()
         while command != expectedCommand:
-            #print "waiting command"
-            if time.time()> start+0.5:
+            #print "waiting command", expectedCommand
+            if time.time() > start+0.5:
                 print "timeout"
                 return None
             if len(self.buffer) > 15:
@@ -80,6 +96,7 @@ class TelemetryReader():
                 header += new
                 if len(header) > 3:
                     header = header[1:]
+            #print "got header"
             size = ord(self.ser.read())
             command = ord(self.ser.read())
             if command != expectedCommand:
@@ -94,7 +111,7 @@ class TelemetryReader():
             checksum ^= i
         receivedChecksum = ord(self.ser.read())
         if command != expectedCommand:
-            print( "commands dont match!", command, expectedCommand, len(self.buffer))
+            print("commands dont match!", command, expectedCommand, len(self.buffer))
             if receivedChecksum == checksum:          # was not supposed to arrive now, but data is data!
                 #self.try_handle_response(command,data)
                 #print "gotcha"
@@ -108,18 +125,45 @@ class TelemetryReader():
             return None
 
     def MSPquery(self, command):
-            o = bytearray('$M<')
-            c = 0
-            o += chr(0)
-            c ^= o[3]       #no payload
-            o += chr(command)
-            c ^= o[4]
-            o += chr(c)
-            answer = None
-            while not answer:
-                    self.ser.write(o)
-                    answer = self.receiveAnswer(command)
-            return answer
+        o = bytearray('$M<')
+        c = 0
+        o += chr(0)
+        c ^= o[3]       #no payload
+        o += chr(command)
+        c ^= o[4]
+        o += chr(c)
+        answer = None
+        while not answer:
+                self.ser.write(o)
+                answer = self.receiveAnswer(command)
+        return answer
+
+    def MSPquery16d(self, command, data=None):
+        size = len(data) * 2
+        o = bytearray('$M<')
+        c = 0
+        o += chr(size)
+        c ^= o[3]       #no payload
+        o += chr(command)
+        c ^= o[4]
+        for value in data:
+            high = value >> 8  # The value of x shifted 8 bits to the right, creating coarse.
+            low = value % 256
+            o += chr(low)
+            c ^= o[-1]
+            o += chr(high)
+            c ^= o[-1]
+        o += chr(c)
+        answer = None
+        # print [int(i) for i in o]
+        while answer is None:
+            #print "waiting...11
+            self.ser.write(o)
+            answer = self.receiveAnswer(command)
+            time.sleep(0.10)
+#        print "worked!"
+        return answer
+
 
     def decode32(self, data):
         #print data
@@ -150,7 +194,7 @@ class TelemetryReader():
             return longitude, latitude
         return 0, 0
 
-    def read_attitude(self):
+    def read_attitude(self, _nothing = None):
         #print "requesting attitude"
         answer = self.MSPquery(MSP_ATTITUDE)
         if answer:
@@ -158,7 +202,7 @@ class TelemetryReader():
             roll = self.decode16(answer[0:2])/10.0
             pitch = self.decode16(answer[2:4])/10.0
             mag = self.decode16(answer[4:6])
-            #print roll,pitch
+            self.attitude = (roll, pitch, mag)
             return roll, pitch, mag
         return 0, 0, 0
 
