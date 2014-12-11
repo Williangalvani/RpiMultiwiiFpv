@@ -16,4 +16,4 @@
 ###On the Pc:###
 *`cd fpv/`*
 
-*`python ground.py`*
+*`python ground.py [raspberry IP])`*
