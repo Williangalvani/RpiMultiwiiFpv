@@ -5,15 +5,15 @@
 - rpi camera enabled
 
 ###On the ground:
-- TBA
+- gstreamer-1.0
 
 ##Usage:##
 ###On the Pi:###
-*`cd fpv/air/camera`*
+*`cd fpv/`*
 
-*`python telemetry_air.py`*
+*`python air.py`*
 
 ###On the Pc:###
-*`cd fpv/air/Ground`*
+*`cd fpv/`*
 
 *`python ground.py`*
