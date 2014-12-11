@@ -42,21 +42,22 @@ class Sender(threading.Thread):
         """
         if self.requested:
             name, lista = self.requested.pop(0)
+            op = "req"
         else:
             name, lista = self.periodic[self.msg_counter % self.len_periodics]
+            op = "per"
         try:
             lista = lista()
         except:
             pass
         dict = {str(name): lista}
-        data = "req >{0}".format(pkl.dumps(dict))
+        data = "{0} >{1}".format(op,pkl.dumps(dict))
         return data
 
     def run(self):
         while self.running:
             time.sleep(0.01)
             data = self.get_next_message()
-            #print data
             self.msg_counter += 1
             self.sock.sendto(data, self.addr)
         print "ground sender finalized!"

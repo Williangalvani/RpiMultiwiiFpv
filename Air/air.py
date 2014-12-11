@@ -7,7 +7,7 @@ import cPickle as pkl
 from serialcomm.seriallink import TelemetryReader
 from rssi import read_rssi
 from protocol.messages import *
-
+import os
 print "Socket open, waiting for connection"
 
 
@@ -68,15 +68,17 @@ class Receiver(threading.Thread):
                 time.sleep(0.01)
                 self.treatData(data)
 
-                # UDPSock.sendto("{0}".format(reader.attitude), (addr[0], 21567))
-                if not self.stream:
-                    try:
-                        print "opening video stream."
-                        subprocess.Popen(["sh", "cameraGst.sh", "{0}".format(addr[0])])
-                        print "video stream open."
-                        self.stream = True
-                    except:
-                        pass
+                # if not self.stream:
+                #     # try:
+                #         path = os.path.join(os.getcwd(),"Air")
+                #         print "opening video stream."
+                #         path = os.path.join(os.getcwd(),"Air")
+                #         # print os.getcwd(), path
+                #         subprocess.Popen(["sh", "cameraGst.sh", "{0}".format(addr[0])], cwd = path)
+                #         time.sleep(10) #          print "video stream open."
+                #         self.stream = True
+                #     # except:
+                #         pass
         print "air receiver finalized!"
 
     def treatData(self, string):
@@ -94,30 +96,10 @@ class Receiver(threading.Thread):
             self.serial.queue_rc(data['rc'])
         elif str(MSP_PID) in data:
             self.serial.queue_pid_request()
+        else:
+            print "wtf?"
 
     def stop(self):
         print "trying to stop air receiver..."
         self.running = False
 
-reader = TelemetryReader()
-receiver = Receiver(reader)
-receiver.start()
-sender = Sender(reader, receiver)
-sender.start()
-
-
-def exit_gracefully(signum, frame):
-    print "trying to stop threads..."
-    reader.stop()
-    # receiver.stop()
-    # sender.stop()
-    # receiver.join()
-    # sender.join()
-    # global done
-    exit()
-    done = True
-
-signal.signal(signal.SIGINT, exit_gracefully)
-
-while not done:
-    time.sleep(1)

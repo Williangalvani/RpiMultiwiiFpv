@@ -65,8 +65,8 @@ class TelemetryReader():
     def queue_rc(self, rc_list):
         self.requested.append((self.write_rc, rc_list))
 
-    def queue_pid_request(self, rc_list):
-        self.requested.append((self.get_pid, []))
+    def queue_pid_request(self):
+        self.requested.append((self.read_pid, []))
 
     def write_rc(self, rc_list):
         self.MSPquery16d(MSP_SET_RAW_RC, rc_list)
@@ -204,7 +204,7 @@ class TelemetryReader():
         #print "requesting attitude"
         answer = self.MSPquery(MSP_ATTITUDE)
         if answer:
-            #print answer
+            # print answer
             roll = self.decode16(answer[0:2]) / 10.0
             pitch = self.decode16(answer[2:4]) / 10.0
             mag = self.decode16(answer[4:6])
@@ -212,9 +212,9 @@ class TelemetryReader():
             return roll, pitch, mag
         return 0, 0, 0
 
-    def read_pid(self):
+    def read_pid(self,params=None):
         self.pid = self.MSPquery(MSP_PID)
-        print self.pid
+        #print self.pid
 
 reader = None
 
