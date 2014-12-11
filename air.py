@@ -15,6 +15,7 @@ class Launcher():
         self.receiver.start()
         self.sender = Sender(self.reader, self.receiver)
         self.sender.start()
+        self.reader.set_sender(self.sender)
         self.stream = False
         while True:
             time.sleep(1)

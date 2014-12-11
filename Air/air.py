@@ -22,6 +22,7 @@ class Sender(threading.Thread):
         self.running = True
         self.addr = None
         self.setDaemon(True)
+        self.request = []
 
     def run(self):
         msg_counter = 1
@@ -31,8 +32,15 @@ class Sender(threading.Thread):
                     self.addr = (self.receiver.addr, 21567)
 
                 time.sleep(0.01)
-                data = "att >{0}".format(pkl.dumps(self.serial.attitude))
-                msg_counter += 1
+
+                if self.request:
+                    request = self.request.pop(0)
+                    datadict = {request[0]:request[1]}
+                    data = "resp >{0}".format(pkl.dumps(datadict))
+                else:
+                    data = "att >{0}".format(pkl.dumps(self.serial.attitude))
+                    msg_counter += 1
+
                 self.sock.sendto(data, (self.receiver.addr, 21567))
 
                 if msg_counter % 50 == 0:
@@ -47,6 +55,8 @@ class Sender(threading.Thread):
         print "trying to stop air sender..."
         self.running = False
 
+    def queue(self, msg, data):
+        self.request.append((msg, data))
 
 class Receiver(threading.Thread):
     def __init__(self, serial):
@@ -68,17 +78,6 @@ class Receiver(threading.Thread):
                 time.sleep(0.01)
                 self.treatData(data)
 
-                # if not self.stream:
-                #     # try:
-                #         path = os.path.join(os.getcwd(),"Air")
-                #         print "opening video stream."
-                #         path = os.path.join(os.getcwd(),"Air")
-                #         # print os.getcwd(), path
-                #         subprocess.Popen(["sh", "cameraGst.sh", "{0}".format(addr[0])], cwd = path)
-                #         time.sleep(10) #          print "video stream open."
-                #         self.stream = True
-                #     # except:
-                #         pass
         print "air receiver finalized!"
 
     def treatData(self, string):

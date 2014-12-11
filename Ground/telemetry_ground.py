@@ -91,6 +91,10 @@ class Receiver(threading.Thread):
 
         elif string.startswith("rssi"):
             self.data['RSSI'] = pkl.loads(string.split(">", 1)[1])
+        elif string.startswith("resp"):
+            data = pkl.loads(string.split(">", 1)[1])
+            if str(MSP_PID) in data:
+                self.data['pid'] = data[MSP_PID]
         else:
             print string
 

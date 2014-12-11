@@ -25,9 +25,12 @@ class TelemetryReader():
         self.attitude = [0, 0, 0]
         self.buffer = ""
         self.ser = None
+        self.sender = None
         self.requested = []  # special messages on request
         self.periodic = [(self.read_attitude, None), ]  # regular messages, sent one each cycle
         self.msg_counter = 0
+        self.pidnames = []
+        self.pid_list = []
 
     def loop(self):
         print "starting loop"
@@ -60,6 +63,8 @@ class TelemetryReader():
     def stop(self):
         self.run = False
 
+    def set_sender(self, sender):
+        self.sender = sender
 
 ###### get rid of this!
     def queue_rc(self, rc_list):
@@ -212,12 +217,17 @@ class TelemetryReader():
             return roll, pitch, mag
         return 0, 0, 0
 
-    def read_pid(self,params=None):
-        self.pid = self.MSPquery(MSP_PID)
-        #print self.pid
+    def get_pid_names(self):
+        if self.pidnames:
+            return self.pidnames
+        else:
+            self.pidnames = "".join([chr(i) for i in self.MSPquery(MSP_PIDNAMES)]).split(";")[:-1]
+        return self.pidnames
 
-reader = None
 
-
-# reader = TelemetryReader()
-# time.sleep(10)
+    def read_pid(self, params=None):
+        pids = zip(*[iter(self.MSPquery(MSP_PID))]*3)
+        names = self.get_pid_names()
+        self.pid_list = zip(names, pids)
+        self.sender.queue(MSP_PID, self.pid_list)
+        return self.pid_list
