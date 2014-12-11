@@ -9,6 +9,7 @@ import threading
 import signal
 
 import cPickle as pkl
+from protocol.messages import *
 
 class Sender(threading.Thread):
 
@@ -20,33 +21,41 @@ class Sender(threading.Thread):
         self.msg_counter = 0
 
         self.requested = [] # special messages on request
-        self.periodic = [('counter', self.counter),
-                         ('rc', self.get_rc)]  # regular messages, sent one each cycle
+        self.periodic = [(RPI_COUNTER, self.counter),
+                         (MSP_SET_RAW_RC, self.get_rc),
+                         (MSP_PID, [])]  # regular messages, sent one each cycle
+
         self.len_periodics = len(self.periodic)
 
 
     def counter(self):
-        self.msg_counter+=1
+        self.msg_counter += 1
         return self.msg_counter
 
     def get_rc(self):
         return [1500 for i in range(8)]
 
+
+    def get_next_message(self):
+        """
+        :return: next data message to be sent
+        """
+        if self.requested:
+            name, lista = self.requested.pop(0)
+        else:
+            name, lista = self.periodic[self.msg_counter % self.len_periodics]
+        try:
+            lista = lista()
+        except:
+            pass
+        dict = {str(name): lista}
+        data = "req >{0}".format(pkl.dumps(dict))
+        return data
+
     def run(self):
         while self.running:
             time.sleep(0.01)
-            if self.requested:
-                name, lista = self.requested.pop(0)
-                lista2 = lista()
-                dict = {name: lista2}
-                data = "req >{0}".format(pkl.dumps(dict))
-
-            else:
-                name, lista = self.periodic[self.msg_counter % self.len_periodics]
-                lista2 = lista()
-                dict = {name: lista2}
-                data = "req >{0}".format(pkl.dumps(dict))
-
+            data = self.get_next_message()
             #print data
             self.msg_counter += 1
             self.sock.sendto(data, self.addr)

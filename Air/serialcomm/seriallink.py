@@ -1,11 +1,11 @@
-from messages import *
-#from protocol import *
+from protocol.messages import *
+# from protocol import *
 import serial
 import time
 import threading
 
-class FuncThread(threading.Thread):
 
+class FuncThread(threading.Thread):
     def __init__(self, target, *args):
         self._target = target
         self._args = args
@@ -17,7 +17,6 @@ class FuncThread(threading.Thread):
 
 
 class TelemetryReader():
-
     def __init__(self):
         print "instantiating class"
         self.run = True
@@ -27,7 +26,7 @@ class TelemetryReader():
         self.buffer = ""
         self.ser = None
         self.requested = []  # special messages on request
-        self.periodic = [(self.read_attitude, None), ]   # regular messages, sent one each cycle
+        self.periodic = [(self.read_attitude, None), ]  # regular messages, sent one each cycle
         self.msg_counter = 0
 
     def loop(self):
@@ -61,12 +60,19 @@ class TelemetryReader():
     def stop(self):
         self.run = False
 
+
+###### get rid of this!
     def queue_rc(self, rc_list):
         self.requested.append((self.write_rc, rc_list))
+
+    def queue_pid_request(self, rc_list):
+        self.requested.append((self.get_pid, []))
 
     def write_rc(self, rc_list):
         self.MSPquery16d(MSP_SET_RAW_RC, rc_list)
 
+
+#############################3
 
     def receiveAnswer(self, expectedCommand):
         time.sleep(0.001)
@@ -75,7 +81,7 @@ class TelemetryReader():
         start = time.time()
         while command != expectedCommand:
             #print "waiting command", expectedCommand
-            if time.time() > start+0.5:
+            if time.time() > start + 0.5:
                 print "timeout"
                 return None
             if len(self.buffer) > 15:
@@ -84,7 +90,7 @@ class TelemetryReader():
             #print self.buffer
             while "$M>" not in header:
                 #print "waiting header"
-                if time.time() > start+0.5:
+                if time.time() > start + 0.5:
                     print "timeout"
                     return None
                 new = ""
@@ -112,7 +118,7 @@ class TelemetryReader():
         receivedChecksum = ord(self.ser.read())
         if command != expectedCommand:
             print("commands dont match!", command, expectedCommand, len(self.buffer))
-            if receivedChecksum == checksum:          # was not supposed to arrive now, but data is data!
+            if receivedChecksum == checksum:  # was not supposed to arrive now, but data is data!
                 #self.try_handle_response(command,data)
                 #print "gotcha"
                 #self.flush_input()
@@ -128,14 +134,14 @@ class TelemetryReader():
         o = bytearray('$M<')
         c = 0
         o += chr(0)
-        c ^= o[3]       #no payload
+        c ^= o[3]  #no payload
         o += chr(command)
         c ^= o[4]
         o += chr(c)
         answer = None
         while not answer:
-                self.ser.write(o)
-                answer = self.receiveAnswer(command)
+            self.ser.write(o)
+            answer = self.receiveAnswer(command)
         return answer
 
     def MSPquery16d(self, command, data=None):
@@ -143,7 +149,7 @@ class TelemetryReader():
         o = bytearray('$M<')
         c = 0
         o += chr(size)
-        c ^= o[3]       #no payload
+        c ^= o[3]  #no payload
         o += chr(command)
         c ^= o[4]
         for value in data:
@@ -161,7 +167,7 @@ class TelemetryReader():
             self.ser.write(o)
             answer = self.receiveAnswer(command)
             time.sleep(0.10)
-#        print "worked!"
+        #        print "worked!"
         return answer
 
 
@@ -170,7 +176,7 @@ class TelemetryReader():
         result = (data[0] & 0xff) + ((data[1] & 0xff) << 8) + ((data[2] & 0xff) << 16) + ((data[3] & 0xff) << 24)
         is_negative = data[3] >= 128
         if is_negative:
-            result -= 2**32
+            result -= 2 ** 32
         return result
 
     def decode16(self, data):
@@ -178,7 +184,7 @@ class TelemetryReader():
         result = (data[0] & 0xff) + ((data[1] & 0xff) << 8)
         is_negative = data[1] >= 128
         if is_negative:
-            result -= 2**16
+            result -= 2 ** 16
         return result
 
 
@@ -188,23 +194,27 @@ class TelemetryReader():
         if answer:
             lat_list = answer[2:6]
             long_list = answer[6:10]
-            latitude = self.decode32(lat_list)/10000000.0
-            longitude = self.decode32(long_list)/10000000.0
+            latitude = self.decode32(lat_list) / 10000000.0
+            longitude = self.decode32(long_list) / 10000000.0
             #print longitude,latitude
             return longitude, latitude
         return 0, 0
 
-    def read_attitude(self, _nothing = None):
+    def read_attitude(self, _nothing=None):
         #print "requesting attitude"
         answer = self.MSPquery(MSP_ATTITUDE)
         if answer:
             #print answer
-            roll = self.decode16(answer[0:2])/10.0
-            pitch = self.decode16(answer[2:4])/10.0
+            roll = self.decode16(answer[0:2]) / 10.0
+            pitch = self.decode16(answer[2:4]) / 10.0
             mag = self.decode16(answer[4:6])
             self.attitude = (roll, pitch, mag)
             return roll, pitch, mag
         return 0, 0, 0
+
+    def read_pid(self):
+        self.pid = self.MSPquery(MSP_PID)
+        print self.pid
 
 reader = None
 

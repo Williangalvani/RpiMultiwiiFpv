@@ -1,2 +1,2 @@
-raspivid -n -vf -hf -w 1280 -h 720 -b 1000000 -t 0 -o -
+raspivid -n -w 1920 -h 1080 -b 1000000 -t 0 -o -
 

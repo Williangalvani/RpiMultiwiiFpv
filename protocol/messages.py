@@ -41,3 +41,5 @@ MSP_BIND                 =240
 MSP_EEPROM_WRITE         =250
 MSP_DEBUGMSG             =253
 MSP_DEBUG                =254
+
+RPI_COUNTER = 255

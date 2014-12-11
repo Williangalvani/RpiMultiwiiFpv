@@ -1,5 +1,3 @@
-__author__ = 'will'
-
 import socket
 import subprocess
 import signal
@@ -8,6 +6,7 @@ import time
 import cPickle as pkl
 from serialcomm.seriallink import TelemetryReader
 from rssi import read_rssi
+from protocol.messages import *
 
 print "Socket open, waiting for connection"
 
@@ -89,10 +88,12 @@ class Receiver(threading.Thread):
         else:
             print string
 
-        if 'counter' in data:
+        if str(RPI_COUNTER) in data:
             print data
-        elif 'rc' in data:
+        elif str(MSP_SET_RAW_RC) in data:
             self.serial.queue_rc(data['rc'])
+        elif str(MSP_PID) in data:
+            self.serial.queue_pid_request()
 
     def stop(self):
         print "trying to stop air receiver..."

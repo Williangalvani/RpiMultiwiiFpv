@@ -1,2 +1,2 @@
 #!/bin/sh
-scp -r Air/ pi@192.168.0.20:/home/pi/fpv/
+scp -r . pi@192.168.0.24:/home/pi/fpv/
