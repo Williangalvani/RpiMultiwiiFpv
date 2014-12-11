@@ -13,4 +13,3 @@ if __name__ == "__main__":
     Gtk.main()
     while True:
         time.sleep(1)
-c
