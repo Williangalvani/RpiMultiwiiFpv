@@ -224,10 +224,55 @@ class TelemetryReader():
             self.pidnames = "".join([chr(i) for i in self.MSPquery(MSP_PIDNAMES)]).split(";")[:-1]
         return self.pidnames
 
+    def chunks(self, l, n):
+        if n < 1:
+            n = 1
+        return [l[i:i + n] for i in range(0, len(l), n)]
 
     def read_pid(self, params=None):
-        pids = zip(*[iter(self.MSPquery(MSP_PID))]*3)
+        pids = self.chunks(self.MSPquery(MSP_PID),3)
         names = self.get_pid_names()
+        pid_list = []
+        for i, name in enumerate(names):
+            pid_list.append([name, pids[i]])
         self.pid_list = zip(names, pids)
         self.sender.queue(MSP_PID, self.pid_list)
         return self.pid_list
+
+    def to_list(self, x):
+        if x == None:
+            return ()
+        if type(x) != tuple:
+            return x
+        a, b = x
+        return (self.to_list(a),) + self.to_list(b)
+
+    def queue_pid_write(self, data):
+        all = []
+        for name,values in data:
+            all.extend(values)
+        print all
+        self.MSPquery8d(MSP_SET_PID,all)
+
+
+    def MSPquery8d(self, command, data=None):
+        size = len(data)
+        o = bytearray('$M<')
+        c = 0
+        o += chr(size)
+        c ^= o[3]  #no payload
+        o += chr(command)
+        c ^= o[4]
+        for value in data:
+            o += chr(value)
+            c ^= o[-1]
+        o += chr(c)
+        answer = None
+        # print [int(i) for i in o]
+        while answer is None:
+            #print "waiting...11
+            self.ser.write(o)
+            answer = self.receiveAnswer(command)
+            time.sleep(0.10)
+        #        print "worked!"
+        return answer

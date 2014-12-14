@@ -2,11 +2,8 @@ __author__ = 'will'
 
 
 import socket
-import os
-import subprocess
 import time
 import threading
-import signal
 
 import cPickle as pkl
 from protocol.messages import *
@@ -66,6 +63,9 @@ class Sender(threading.Thread):
         print "trying to finalize ground sender..."
         self.running = False
 
+    def queue_message(self,code,data = None):
+        self.requested.append([code,data])
+
 
 class Receiver(threading.Thread):
     def __init__(self):
@@ -85,6 +85,7 @@ class Receiver(threading.Thread):
 
 
     def treatData(self, string):
+        #print string[0:10]
         if string.startswith("att"):
             #print "got attitude", string
             self.data['attitude'] = pkl.loads(string.split(">", 1)[1])
@@ -93,8 +94,10 @@ class Receiver(threading.Thread):
             self.data['RSSI'] = pkl.loads(string.split(">", 1)[1])
         elif string.startswith("resp"):
             data = pkl.loads(string.split(">", 1)[1])
-            if str(MSP_PID) in data:
+            if MSP_PID in data:
                 self.data['pid'] = data[MSP_PID]
+                # print self.data
+
         else:
             print string
 

@@ -7,7 +7,7 @@ import gi
 
 gi.require_version('Gst', '1.0')
 from gi.repository import GObject, Gst, GdkPixbuf
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 # Needed for window.get_xid(), xvimagesink.set_window_handle(), respectively:
 from gi.repository import GdkX11, GstVideo
 import cairo
@@ -28,6 +28,10 @@ class Video (Gtk.Window):
         self.visual = self.screen.get_rgba_visual()
         self.set_decorated(True)
         self.image = Gtk.Image()
+
+        #enable capture of keys
+        self.add_events(Gdk.EventMask.KEY_PRESS_MASK)
+        self.add_events(Gdk.EventMask.KEY_RELEASE_MASK)
 
         self.videowidget = Gtk.DrawingArea()
         self.add(self.videowidget)
@@ -70,6 +74,9 @@ class Video (Gtk.Window):
         self.decode.link(self.convert)
         self.convert.link(self.sink)
 
+    def set_controls(self,controls):
+        self.connect("key_press_event", controls.callback_press)
+        self.connect("key_release_event", controls.callback_release)
 
     def on_pad_added(self, element, pad):
         if "video" in name:
