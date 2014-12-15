@@ -89,15 +89,19 @@ class Receiver(threading.Thread):
         else:
             print string
 
+        # print data
         if str(RPI_COUNTER) in data:
-            print data
-        elif str(MSP_SET_RAW_RC) in data:
             # print data
+            pass
+        elif str(MSP_SET_RAW_RC) in data:
+            #print data
             self.serial.queue_rc(data[str(MSP_SET_RAW_RC)])
         elif str(MSP_PID) in data:
             self.serial.queue_pid_request()
         elif str(MSP_SET_PID) in data:
             self.serial.queue_pid_write(data[str(MSP_SET_PID)])
+        elif str(MSP_EEPROM_WRITE) in data:
+            self.serial.queue_eeprom()
         else:
             print "wtf?"
 

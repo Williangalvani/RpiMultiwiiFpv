@@ -19,18 +19,21 @@ class Sender(threading.Thread):
 
         self.requested = [] # special messages on request
         self.periodic = [(RPI_COUNTER, self.counter),
-                         (MSP_SET_RAW_RC, self.get_rc),
-                         (MSP_PID, [])]  # regular messages, sent one each cycle
+                         (MSP_SET_RAW_RC, self.get_rc)]  # regular messages, sent one each cycle
 
         self.len_periodics = len(self.periodic)
+        self.controls = None
 
+    def set_controls(self, controls):
+        self.controls =controls
 
     def counter(self):
-        self.msg_counter += 1
+        print "counter: "  ,self.msg_counter
         return self.msg_counter
 
     def get_rc(self):
-        return [1500 for i in range(8)]
+        print "channels:" , self.controls.rchannels
+        return self.controls.rchannels
 
 
     def get_next_message(self):
@@ -42,20 +45,25 @@ class Sender(threading.Thread):
             op = "req"
         else:
             name, lista = self.periodic[self.msg_counter % self.len_periodics]
+            #print name, self.msg_counter, self.len_periodics
             op = "per"
+            self.msg_counter += 1
+            #print name, lista,lista()
+
         try:
-            lista = lista()
+            dict = {str(name): lista}
+            data = "{0} >{1}".format(op,pkl.dumps(dict))
         except:
-            pass
-        dict = {str(name): lista}
-        data = "{0} >{1}".format(op,pkl.dumps(dict))
+            dict = {str(name): lista()}
+            data = "{0} >{1}".format(op,pkl.dumps(dict))
+
         return data
 
     def run(self):
         while self.running:
-            time.sleep(0.01)
+            time.sleep(0.05)
             data = self.get_next_message()
-            self.msg_counter += 1
+            # self.msg_counter += 1
             self.sock.sendto(data, self.addr)
         print "ground sender finalized!"
 

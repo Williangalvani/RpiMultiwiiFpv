@@ -3,7 +3,7 @@ from protocol.messages import *
 import serial
 import time
 import threading
-
+import traceback
 
 class FuncThread(threading.Thread):
     def __init__(self, target, *args):
@@ -27,7 +27,8 @@ class TelemetryReader():
         self.ser = None
         self.sender = None
         self.requested = []  # special messages on request
-        self.periodic = [(self.read_attitude, None), ]  # regular messages, sent one each cycle
+        self.periodic = [(self.read_attitude, None),(self.get_status, None) ]  # regular messages, sent one each cycle
+        self.periodic_len = len(self.periodic)
         self.msg_counter = 0
         self.pidnames = []
         self.pid_list = []
@@ -52,13 +53,12 @@ class TelemetryReader():
                             function(params)
 
                         else:
-                            function, params = self.periodic[self.msg_counter]
+                            function, params = self.periodic[self.msg_counter% self.periodic_len]
                             function(params)
-                            # print self.attitude
-                            #self.window.set_attitude(*self.attitude)
-                            time.sleep(0.05)
+                            self.msg_counter += 1
                 except Exception, e:
-                    print e
+                    print e, "aqui"
+                    print traceback.format_exc()
 
     def stop(self):
         self.run = False
@@ -80,7 +80,7 @@ class TelemetryReader():
 #############################3
 
     def receiveAnswer(self, expectedCommand):
-        time.sleep(0.001)
+        time.sleep(0.0001)
         command = None
         size = 0
         start = time.time()
@@ -101,8 +101,8 @@ class TelemetryReader():
                 new = ""
                 try:
                     new = self.ser.read(1)
-                except serial.SerialTimeoutException:
-                    #   print "timeout!"
+                except :
+                    print "timeout!"
                     return None
                 header += new
                 if len(header) > 3:
@@ -120,7 +120,12 @@ class TelemetryReader():
         checksum ^= command
         for i in data:
             checksum ^= i
-        receivedChecksum = ord(self.ser.read())
+        receivedChecksum = ""
+        while receivedChecksum == "":
+            try:
+                receivedChecksum = ord(self.ser.read())
+            except:
+                pass
         if command != expectedCommand:
             print("commands dont match!", command, expectedCommand, len(self.buffer))
             if receivedChecksum == checksum:  # was not supposed to arrive now, but data is data!
@@ -158,6 +163,7 @@ class TelemetryReader():
         o += chr(command)
         c ^= o[4]
         for value in data:
+            value = int(value)
             high = value >> 8  # The value of x shifted 8 bits to the right, creating coarse.
             low = value % 256
             o += chr(low)
@@ -171,7 +177,7 @@ class TelemetryReader():
             #print "waiting...11
             self.ser.write(o)
             answer = self.receiveAnswer(command)
-            time.sleep(0.10)
+            time.sleep(0.010)
         #        print "worked!"
         return answer
 
@@ -224,6 +230,13 @@ class TelemetryReader():
             self.pidnames = "".join([chr(i) for i in self.MSPquery(MSP_PIDNAMES)]).split(";")[:-1]
         return self.pidnames
 
+    def get_box_names(self):
+        if self.boxnames:
+            return self.boxnames
+        else:
+            self.boxnames = "".join([chr(i) for i in self.MSPquery(MSP_BOXNAMES)]).split(";")[:-1]
+        return self.boxnames
+
     def chunks(self, l, n):
         if n < 1:
             n = 1
@@ -254,6 +267,8 @@ class TelemetryReader():
         print all
         self.MSPquery8d(MSP_SET_PID,all)
 
+    def encode16(self,list):
+        return list[0] + list[1] *256
 
     def MSPquery8d(self, command, data=None):
         size = len(data)
@@ -268,11 +283,25 @@ class TelemetryReader():
             c ^= o[-1]
         o += chr(c)
         answer = None
-        # print [int(i) for i in o]
         while answer is None:
-            #print "waiting...11
             self.ser.write(o)
             answer = self.receiveAnswer(command)
             time.sleep(0.10)
-        #        print "worked!"
         return answer
+
+    def get_status(self,extra=None):
+        data = self.MSPquery(MSP_STATUS)
+        micros = self.encode16(data[:2])
+        status_flags = []
+        status = ('angle', 'Horizon', 'baro', 'mag', 'headfree', 'headadj')
+        flags = data[4] + data[5] * 256+ data[6] * 256* 256+ data[7] * 256 * 256 *256
+        for i, flag in enumerate(status):
+            if (flags >> i) % 2:
+                status_flags.append(flag)
+        #print data, micros, status_flags, f# lags, data[4], data[5],data[6], data[7]
+
+    def write_eeprom(self, data = None):
+        self.MSPquery(MSP_EEPROM_WRITE)
+
+    def queue_eeprom(self, data = None):
+        self.requested.append([self.write_eeprom,None])

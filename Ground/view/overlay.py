@@ -1,4 +1,4 @@
-from protocol.messages import MSP_PID, MSP_SET_PID
+from protocol.messages import *
 
 __author__ = 'will'
 
@@ -81,7 +81,7 @@ class Overlay (Gtk.Window):
         cr.set_operator(cairo.OPERATOR_SOURCE)
         cr.paint()
         cr.set_operator(cairo.OPERATOR_OVER)
-        if self.menu_on:
+        if not self.menu_on:
             self.draw_horizon(cr)
             self.draw_rssi(cr)
             self.draw_compass(cr)
@@ -196,9 +196,11 @@ class Overlay (Gtk.Window):
             self.label.set_markup(text)
 
     def update_screen(self):
-        if self.controls.getkey(36):
+        if self.controls.getkey(36) or self.controls.getButton(10):
             self.menu_on = not self.menu_on
-            time.sleep(0.5)
+            time.sleep(0.2)
+            if self.menu_on:
+                self.sender.queue_message(MSP_PID)
 
     def draw_menu(self, cr):
         cr.set_source_rgba(255, 255, 255, 255)
@@ -212,7 +214,7 @@ class Overlay (Gtk.Window):
 #################################################
         self.pitch_trigger = False
         pitch = self.controls.get_channel('pitch')
-        print "pitch: {0}".format(pitch)
+        # print "pitch: ", pitch
         if pitch > 1800 and not self.pitch_trigger:
             self.ypos -= 1
             self.ypos%=10
@@ -228,13 +230,14 @@ class Overlay (Gtk.Window):
 ################################################
         self.roll_trigger = False
         roll = self.controls.get_channel('roll')
+        # print "roll:",roll
         if roll > 1800 and not self.roll_trigger:
-            self.xpos -= 1
+            self.xpos += 1
             self.xpos%=3
             self.roll_trigger = True
 
         elif roll < 1200 and not self.roll_trigger:
-            self.xpos += 1
+            self.xpos -= 1
             self.xpos%=3
             self.roll_trigger = True
         else:
@@ -246,21 +249,23 @@ class Overlay (Gtk.Window):
         throttle = self.controls.get_channel('throttle')
         #print "throttle:" , throttle
         if throttle > 1800 and not self.throttle_trigger:
-            value = int(self.pids[self.ypos][1][self.xpos]) - 1
+            value = int(self.pids[self.ypos][1][self.xpos]) + 1
             self.pids[self.ypos][1][self.xpos] = value
             self.throttle_trigger = True
 
         elif throttle < 1200 and not self.throttle_trigger:
-            value = int(self.pids[self.ypos][1][self.xpos]) + 1
+            value = int(self.pids[self.ypos][1][self.xpos]) - 1
             self.pids[self.ypos][1][self.xpos] = value
             self.throttle_trigger = True
         else:
             self.throttle_trigger = None
 ###############################################
 
-        if self.controls.getkey('save'):
+        if self.controls.getkey('save') or self.controls.getButton(1):
             self.sender.queue_message(MSP_SET_PID, self.pids)
 
+        if self.controls.getkey('eeprom') or self.controls.getButton(2):
+            self.sender.queue_message(MSP_EEPROM_WRITE)
         self.sender.queue_message(MSP_PID,None)
         cr.set_font_size(20)
 
@@ -282,7 +287,8 @@ class Overlay (Gtk.Window):
                 selected_str = "->" if selected else ""
                 cr.move_to(self.menu_x + 150 + 100*i, self.menu_y + 30 * line)
                 cr.show_text('{0}{1}: {2}'.format(selected_str,letter, values[i]))
-
+            cr.move_to(100, 50)
+            cr.show_text("Press 'f' or 1 to send new pid, 'g' or 2 to write to eeprom")
             cr.stroke()
 
     def update_overlay(self):
