@@ -81,6 +81,18 @@ class TelemetryReader():
         self.MSPquery16d(MSP_SET_RAW_RC, rc_list)
 
 
+    def read(self,n=1):
+        result = ""
+        start = time.time()
+        while len(result) != n:
+            try:
+                result = result + self.ser.read(1)
+            except:
+                pass
+            if (time.time() - start) > 1:
+                raise serial.SerialTimeoutException
+        return result
+
 #############################3
 
     def receiveAnswer(self, expectedCommand):
@@ -112,10 +124,10 @@ class TelemetryReader():
                 if len(header) > 3:
                     header = header[1:]
             #print "got header"
-            size = ord(self.ser.read())
-            command = ord(self.ser.read())
+            size = ord(self.read())
+            command = ord(self.read())
             if command != expectedCommand:
-                print "wrong command!"
+                print "wrong command! expected:", expectedCommand, " got:", command
         data = []
         for i in range(size):
             data.append(ord(self.ser.read()))
@@ -137,8 +149,9 @@ class TelemetryReader():
                 #print "gotcha"
                 #self.flush_input()
                 pass
-            return None
         if checksum == receivedChecksum:
+            if not data:
+                return True
             return data
         else:
             print ('lost packet!')
@@ -268,8 +281,10 @@ class TelemetryReader():
         all = []
         for name,values in data:
             all.extend(values)
-        print all
-        self.MSPquery8d(MSP_SET_PID,all)
+        self.requested.append((self.pid_write,all))
+
+    def pid_write(self,data):
+            self.MSPquery8d(MSP_SET_PID,data)
 
     def encode16(self,list):
         return list[0] + list[1] *256
@@ -308,7 +323,10 @@ class TelemetryReader():
         return status_flags
 
     def write_eeprom(self, data = None):
-        self.MSPquery(MSP_EEPROM_WRITE)
+        print self.MSPquery(MSP_EEPROM_WRITE)
 
     def queue_eeprom(self, data = None):
-        self.requested.append([self.write_eeprom,None])
+        request = (self.write_eeprom,None)
+        print len(self.requested), self.requested
+        if request not in self.requested:
+            self.requested.append(request)
