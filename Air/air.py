@@ -38,7 +38,10 @@ class Sender(threading.Thread):
                     datadict = {request[0]:request[1]}
                     data = "resp >{0}".format(pkl.dumps(datadict))
                 else:
-                    data = "att >{0}".format(pkl.dumps(self.serial.attitude))
+                    if msg_counter % 5 == 0:
+                        data = "stat >{0}".format(pkl.dumps(self.serial.status_flags))
+                    else:
+                        data = "att >{0}".format(pkl.dumps(self.serial.attitude))
                     msg_counter += 1
 
                 self.sock.sendto(data, (self.receiver.addr, 21567))

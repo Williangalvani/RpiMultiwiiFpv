@@ -97,6 +97,9 @@ class Receiver(threading.Thread):
         if string.startswith("att"):
             #print "got attitude", string
             self.data['attitude'] = pkl.loads(string.split(">", 1)[1])
+        elif string.startswith("stat"):
+            #print "got attitude", string
+            self.data['status'] = pkl.loads(string.split(">", 1)[1])
 
         elif string.startswith("rssi"):
             self.data['RSSI'] = pkl.loads(string.split(">", 1)[1])

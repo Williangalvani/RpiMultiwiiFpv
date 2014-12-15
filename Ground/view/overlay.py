@@ -24,7 +24,7 @@ class Overlay (Gtk.Window):
     controls = None
     menu_on = False
     menu_x = 100
-    menu_y = 100
+    menu_y = 200
     # menu cursor pos
     ypos = 0
     xpos = 0
@@ -85,8 +85,18 @@ class Overlay (Gtk.Window):
             self.draw_horizon(cr)
             self.draw_rssi(cr)
             self.draw_compass(cr)
+            self.draw_status(cr)
         else:
             self.draw_menu(cr)
+
+    def draw_status(self,cr):
+        _x = self.width - self.compass_x_off
+        _y = self.compass_y_off +200
+        if 'status' in self.receiver.data.keys():
+            for i, flag in enumerate(self.receiver.data['status']):
+                cr.move_to(_x, _y + 30 * i)
+                cr.show_text(flag)
+        cr.stroke()
 
 
     def draw_rssi(self, cr):

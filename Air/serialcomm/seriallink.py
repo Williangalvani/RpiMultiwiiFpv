@@ -27,11 +27,15 @@ class TelemetryReader():
         self.ser = None
         self.sender = None
         self.requested = []  # special messages on request
-        self.periodic = [(self.read_attitude, None),(self.get_status, None) ]  # regular messages, sent one each cycle
+        self.periodic = [(self.read_attitude, None),
+                         (self.read_attitude, None),
+                         (self.read_attitude, None),
+                         (self.get_status, None)]  # regular messages, sent one each cycle
         self.periodic_len = len(self.periodic)
         self.msg_counter = 0
         self.pidnames = []
         self.pid_list = []
+        self.status_flags = []
 
     def loop(self):
         print "starting loop"
@@ -293,12 +297,15 @@ class TelemetryReader():
         data = self.MSPquery(MSP_STATUS)
         micros = self.encode16(data[:2])
         status_flags = []
-        status = ('angle', 'Horizon', 'baro', 'mag', 'headfree', 'headadj')
+        status = ('Stable', '', '', '', '', '','1','2','3','3','4','5','6','7','8','9','Armed')
         flags = data[4] + data[5] * 256+ data[6] * 256* 256+ data[7] * 256 * 256 *256
         for i, flag in enumerate(status):
             if (flags >> i) % 2:
-                status_flags.append(flag)
-        #print data, micros, status_flags, f# lags, data[4], data[5],data[6], data[7]
+                if len(flag):
+                    status_flags.append(flag)
+        # print data, micros, status_flags, flags#, data[4], data[5],data[6], data[7]
+        self.status_flags = status_flags
+        return status_flags
 
     def write_eeprom(self, data = None):
         self.MSPquery(MSP_EEPROM_WRITE)
