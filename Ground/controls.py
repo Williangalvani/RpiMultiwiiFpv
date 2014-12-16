@@ -13,7 +13,10 @@ s = 39
 d = 40
 w = 25
 
-keymap = {'save': 41}
+keymap = {'save': 41,
+          'eeprom': 42,
+          'reload': 43}
+
 
 class Controls(threading.Thread):
     def __init__(self, overlay):

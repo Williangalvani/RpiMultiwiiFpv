@@ -282,7 +282,7 @@ class Overlay (Gtk.Window):
         time.sleep(0.1)
         try:
 
-           if not self.pids:
+           if not self.pids or self.controls.getkey('reload') or self.controls.getButton(3):
                self.pids = self.receiver.data['pid']
         except Exception, e:
             print Exception, e
@@ -297,8 +297,8 @@ class Overlay (Gtk.Window):
                 selected_str = "->" if selected else ""
                 cr.move_to(self.menu_x + 150 + 100*i, self.menu_y + 30 * line)
                 cr.show_text('{0}{1}: {2}'.format(selected_str,letter, values[i]))
-            cr.move_to(100, 50)
-            cr.show_text("Press 'f' or 1 to send new pid, 'g' or 2 to write to eeprom")
+            cr.move_to(100, 100)
+            cr.show_text("Press 'f' or 1 to send new pid, 'g' or 2 to write to eeprom, 'h' or 3 to reload")
             cr.stroke()
 
     def update_overlay(self):
