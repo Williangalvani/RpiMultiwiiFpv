@@ -86,6 +86,7 @@ class Overlay (Gtk.Window):
             self.draw_rssi(cr)
             self.draw_compass(cr)
             self.draw_status(cr)
+            self.draw_altitude(cr)
         else:
             self.draw_menu(cr)
 
@@ -98,9 +99,21 @@ class Overlay (Gtk.Window):
                 cr.show_text(flag)
         cr.stroke()
 
+    def draw_altitude(self,cr):
+        _x = self.width - 150
+        _y = 80
+        # try:
+        altitude, vario = self.receiver.get('attitude')[3:5]
+        cr.move_to(_x, _y)
+        cr.show_text("Alt: {0}M".format(altitude))
+        cr.move_to(_x, _y+20)
+        cr.show_text("Var: {0}M/s".format(vario))
+        cr.stroke()
+        # except:
+        #     pass
 
     def draw_rssi(self, cr):
-        cr.move_to(self.width-120, 50)
+        cr.move_to(self.width-150, 50)
         cr.show_text("Wi-FI:{0}%".format(self.receiver.get('RSSI')))
         cr.stroke()
 
@@ -201,9 +214,11 @@ class Overlay (Gtk.Window):
 
     def update_text(self):
         """Update text"""
-        text = self.get_text()
-        if text is not None:
-            self.label.set_markup(text)
+        #
+        # text = self.get_text()
+        # if text is not None:
+        #     self.label.set_markup(text)
+        pass
 
     def update_screen(self):
         if self.controls.getkey(36) or self.controls.getButton(10):

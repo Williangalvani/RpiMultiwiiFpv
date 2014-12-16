@@ -4,6 +4,7 @@ import threading
 import time
 import pygame
 
+
 up_arrow = 111
 down_arrow = 116
 left = 113

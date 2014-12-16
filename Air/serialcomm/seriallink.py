@@ -5,6 +5,22 @@ import time
 import threading
 import traceback
 
+
+import time
+
+def timeit(method):
+
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+
+        print '%r (%r, %r) %2.2f sec' % \
+              (method.__name__, args, kw, te-ts)
+        return result
+
+    return timed
+
 class FuncThread(threading.Thread):
     def __init__(self, target, *args):
         self._target = target
@@ -22,7 +38,7 @@ class TelemetryReader():
         self.run = True
         self.thread = FuncThread(self.loop)
         self.thread.start()
-        self.attitude = [0, 0, 0]
+        self.attitude = [0, 0, 0, 0, 0]
         self.buffer = ""
         self.ser = None
         self.sender = None
@@ -36,6 +52,7 @@ class TelemetryReader():
         self.pidnames = []
         self.pid_list = []
         self.status_flags = []
+        self.last_time_baro = time.time()
 
     def loop(self):
         print "starting loop"
@@ -228,17 +245,27 @@ class TelemetryReader():
             return longitude, latitude
         return 0, 0
 
+
     def read_attitude(self, _nothing=None):
         #print "requesting attitude"
         answer = self.MSPquery(MSP_ATTITUDE)
+        roll, pitch, mag, altitude, vario = self.attitude
         if answer:
             # print answer
             roll = self.decode16(answer[0:2]) / 10.0
             pitch = self.decode16(answer[2:4]) / 10.0
             mag = self.decode16(answer[4:6])
-            self.attitude = (roll, pitch, mag)
-            return roll, pitch, mag
-        return 0, 0, 0
+
+        if (time.time() - self.last_time_baro)>0.5:
+            answer = self.MSPquery(MSP_ALTITUDE)
+            if answer:
+                altitude = self.decode32(answer[:4]) / 100.0
+                vario = self.decode16(answer[4:6]) / 100.0
+                print "got baro"
+                self.last_time_baro = time.time()
+
+        self.attitude = [roll, pitch, mag, altitude, vario]
+        return self.attitude
 
     def get_pid_names(self):
         if self.pidnames:
