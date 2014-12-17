@@ -66,7 +66,7 @@ class Controls(threading.Thread):
     def run(self):
         while True:
             # print self.channels
-            time.sleep(0.1)
+            time.sleep(0.05)
             if not self.joystick_present:
                 for i, keys in enumerate(self.channel_order):
                     down, up = keys
@@ -96,10 +96,6 @@ class Controls(threading.Thread):
                     for event in pygame.event.get():
                           pass
                     print self.rchannels
-
-    time.sleep(0.1)
-
-
 
     def getkey(self, key):
         try:
