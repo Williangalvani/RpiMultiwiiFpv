@@ -13,15 +13,15 @@ class GroundStation():
         self.receiver = Receiver()           # thread that sends data
 
         self.receiver.start()                # thread that receives data
-        self.overlay = Overlay(self.receiver, self.sender)# overlay thread
+        self.overlay = Overlay(self.receiver, self.sender)  # overlay thread
         self.video = Video()                 # video thread
-        self.controls = Controls(self.video) # controls thread
+        self.controls = Controls(self.video)  # controls thread
         self.controls.start()
         self.sender.set_controls(self.controls)
         self.overlay.set_controls(self.controls)
         self.video.run()
         self.sender.start()
-        self.video.connect('configure_event', self.on_configure_event) # move master -> move dog
+        self.video.connect('configure_event', self.on_configure_event)  # move master -> move dog
         self.video.connect('destroy', lambda w: Gtk.main_quit())  # close master -> end program
 
     def on_configure_event(self, *args):
@@ -30,5 +30,3 @@ class GroundStation():
         tx = self.video.get_style().xthickness
         self.overlay.move(x+tx, y+30)
         self.overlay.resize(sx, sy)
-
-
