@@ -32,8 +32,8 @@ class Sender(threading.Thread):
         return self.msg_counter
 
     def get_rc(self):
-        print "channels:" , self.controls.rchannels
-        return self.controls.rchannels
+        print "channels:" , self.controls.raw_channels
+        return self.controls.raw_channels
 
 
     def get_next_message(self):

@@ -22,13 +22,15 @@ keymap = {'save': 41,
 class Controls(threading.Thread):
     def __init__(self, overlay):
         threading.Thread.__init__(self)
+        self.channels = [1000 for i in range(8)]  # [1000; 2000]
+        self.raw_channels = [0 for i in range(8)] # [-500;  500]
+
         self.overlay = overlay
         self.overlay.set_controls(self)
 
         self.keys = {}  # each key on the keyboard is a key on this dict either true or false
 
-        self.channels = [1000 for i in range(8)]  # [1000; 2000]
-        self.raw_channels = [0 for i in range(8)] # [-500;  500]
+
 
         self.throttle = (w, s)
         self.pitch = (up_arrow, down_arrow)
@@ -113,7 +115,7 @@ class Controls(threading.Thread):
         return self.buttons[n-1]
 
     def get_channel(self, n):
-        """returns
+        """returns nth channel, or mapped from string"""
         if isinstance(n, basestring):
             return self.raw_channels[self.channel_map[n]]
         return self.raw_channels[n]

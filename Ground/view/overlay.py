@@ -102,15 +102,15 @@ class Overlay (Gtk.Window):
     def draw_altitude(self,cr):
         _x = self.width - 150
         _y = 80
-        # try:
-        altitude, vario = self.receiver.get('attitude')[3:5]
-        cr.move_to(_x, _y)
-        cr.show_text("Alt: {0}M".format(altitude))
-        cr.move_to(_x, _y+20)
-        cr.show_text("Var: {0}M/s".format(vario))
-        cr.stroke()
-        # except:
-        #     pass
+        try:
+            altitude, vario = self.receiver.get('attitude')[3:5]
+            cr.move_to(_x, _y)
+            cr.show_text("Alt: {0}M".format(altitude))
+            cr.move_to(_x, _y+20)
+            cr.show_text("Var: {0}M/s".format(vario))
+            cr.stroke()
+        except:
+             pass
 
     def draw_rssi(self, cr):
         cr.move_to(self.width-150, 50)
