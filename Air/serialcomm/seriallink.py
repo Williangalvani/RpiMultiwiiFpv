@@ -59,6 +59,11 @@ class TelemetryReader():
         self.connected = False
         self.last_time_baro = time.time()
         self.box_names = None
+        self.last_time_joystick_received = 0
+
+    def reset_rc(self):
+        print "rc timeout!"
+        self.queue_rc([1000 for i in range(8)])
 
     def loop(self):
         while self.run:
@@ -74,6 +79,9 @@ class TelemetryReader():
             if self.connected:
                 try:
                     while self.run:
+                        if time.time() - self.last_time_joystick_received > 1:
+                            self.reset_rc()
+
                         if self.requested:
                             function, params = self.requested.pop(0)
                             function(params)
@@ -95,6 +103,7 @@ class TelemetryReader():
 
 #### queuing methods... i don't like the way it looks.
     def queue_rc(self, rc_list):
+        self.last_time_joystick_received = time.time()
         self.requested.append((self.write_rc, rc_list))
 
     def queue_pid_request(self):
