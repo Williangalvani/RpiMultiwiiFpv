@@ -24,24 +24,28 @@ class Controls(threading.Thread):
         threading.Thread.__init__(self)
         self.overlay = overlay
         self.overlay.set_controls(self)
-        self.keys = {}
-        self.channels = [1000 for i in range(8)]
-        self.rchannels = [0 for i in range(8)]
+
+        self.keys = {}  # each key on the keyboard is a key on this dict either true or false
+
+        self.channels = [1000 for i in range(8)]  # [1000; 2000]
+        self.raw_channels = [0 for i in range(8)] # [-500;  500]
+
         self.throttle = (w, s)
         self.pitch = (up_arrow, down_arrow)
         self.yaw = (a, d)
         self.roll = (left, right)
+
         self.channel_order = [self.roll,
                               self.pitch,
                               self.throttle,
                               self.yaw]
+
         self.channel_map = {'roll':     0,
                             'pitch':    1,
                             'yaw':      2,
                             'throttle': 3}
 
-
-        self.buttons = [0 for i in range( 10)]
+        self.buttons = [0 for i in range(10)]  # joystick buttons
         self.joystick_present = False
 
         try:
@@ -51,7 +55,7 @@ class Controls(threading.Thread):
             self.joystick = pygame.joystick.Joystick(0)
             self.joystick.init()
             self.n_axes = self.joystick.get_numaxes()
-            self.n_buttons= self.joystick.get_numbuttons()
+            self.n_buttons = self.joystick.get_numbuttons()
             self.joystick_present = True
         except Exception, e:
             print e
@@ -61,54 +65,55 @@ class Controls(threading.Thread):
 
     def callback_release(self, widget, event):
         self.keys[event.get_keycode()[1]] = False
-        #print self.keys
 
     def run(self):
         while True:
-            # print self.channels
             time.sleep(0.05)
             if not self.joystick_present:
                 for i, keys in enumerate(self.channel_order):
-                    down, up = keys
+                    decrease, increase = keys
                     mod = 0
-                    if self.getkey(down):
+                    if self.getkey(decrease):
                         mod = + 100
-                    if self.getkey(up):
+                    if self.getkey(increase):
                         mod = - 100
 
-                    self.rchannels[i] += mod
-                    self.rchannels[i] *= 0.8
-                    self.channels[i] = self.rchannels[i]+1500
+                    self.raw_channels[i] += mod
+                    self.raw_channels[i] *= 0.8
+                    self.channels[i] = self.raw_channels[i]+1500
             else:
+                    ## necessary for pygame to read the joystick
+                    for event in pygame.event.get():
+                          pass
+                    print self.raw_channels
+
                     axis = [self.joystick.get_axis(axis1)*100 for axis1 in range(self.n_axes)]
-                    self.rchannels[self.channel_map['throttle']] = 1500-5*axis[1]
-                    self.rchannels[self.channel_map['yaw']] = 1500+5*axis[0]
-                    self.rchannels[self.channel_map['pitch']] = 1500-5*axis[3]
-                    self.rchannels[self.channel_map['roll']] = 1500+5*axis[2]
+                    self.raw_channels[self.channel_map['throttle']] = 1500-5*axis[1]
+                    self.raw_channels[self.channel_map['yaw']] = 1500+5*axis[0]
+                    self.raw_channels[self.channel_map['pitch']] = 1500-5*axis[3]
+                    self.raw_channels[self.channel_map['roll']] = 1500+5*axis[2]
                     self.buttons = [self.joystick.get_button(but)*100 for but in range(self.n_buttons)]
                     print self.buttons
 
-                    if self.buttons[5]:
-                        self.rchannels[4]= 1950
-                    elif self.buttons[7]:
-                        self.rchannels[4] = 1050
-
-                    for event in pygame.event.get():
-                          pass
-                    print self.rchannels
+                    if self.buttons[5]:   #arm
+                        self.raw_channels[4] = 1950
+                    elif self.buttons[7]:  # disarm#
+                        self.raw_channels[4] = 1050
 
     def getkey(self, key):
+        """ gets a key state either by numeric value or from mapped string"""
         try:
-            if isinstance(key,basestring):
+            if isinstance(key, basestring):
                 return self.keys[keymap[key]]
             return self.keys[key]
         except:
             return False
 
-    def getButton(self,n):
+    def getButton(self, n):
         return self.buttons[n-1]
 
     def get_channel(self, n):
-        if isinstance(n,basestring):
-            return self.rchannels[self.channel_map[n]]
-        return self.rchannels[n]
+        """returns
+        if isinstance(n, basestring):
+            return self.raw_channels[self.channel_map[n]]
+        return self.raw_channels[n]
