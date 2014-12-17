@@ -25,6 +25,9 @@ class Overlay (Gtk.Window):
     menu_on = False
     menu_x = 100
     menu_y = 200
+
+    rc_x = 50
+    rc_y = 300
     # menu cursor pos
     ypos = 0
     xpos = 0
@@ -87,6 +90,7 @@ class Overlay (Gtk.Window):
             self.draw_compass(cr)
             self.draw_status(cr)
             self.draw_altitude(cr)
+            # self.draw_rc(cr)
         else:
             self.draw_menu(cr)
 
@@ -199,6 +203,28 @@ class Overlay (Gtk.Window):
         cr.move_to(self.screen_mid_x - 50, self.screen_mid_y)
         cr.line_to(self.screen_mid_x + 50, self.screen_mid_y)
         cr.stroke()
+
+    def draw_rc(self, cr):
+        """"Draws center cross on HUD"""
+        cr.set_source_rgba(255, 255, 255, 255)
+        cr.set_line_width(1)
+        length = 100
+        cr.rectangle(self.rc_x,self.rc_y,length,length)
+        mid = self.rc_x + length/2, self.rc_y + length/2
+        xoff = (self.controls.get_channel('yaw')-1500)/500.0 * 50
+        yoff = (self.controls.get_channel('throttle')-1500)/500.0 * - 50
+        cr.move_to(mid[0],mid[1])
+        cr.line_to(mid[0]+xoff,mid[1]+yoff)
+        cr.stroke()
+
+        cr.rectangle(self.rc_x+length,self.rc_y,length,length)
+        mid = self.rc_x + length + length/2, self.rc_y + length/2
+        xoff = (self.controls.get_channel('roll')-1500)/500.0 * 50
+        yoff = (self.controls.get_channel('pitch')-1500)/500.0 * - 50
+        cr.move_to(mid[0],mid[1])
+        cr.line_to(mid[0]+xoff,mid[1]+yoff)
+        cr.stroke()
+
 
     def close(self, widget, event):
         """Finish Programm on double-click"""

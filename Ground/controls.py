@@ -20,18 +20,17 @@ keymap = {'save': 41,
 
 
 class Controls(threading.Thread):
+
     def __init__(self, overlay):
         threading.Thread.__init__(self)
         self.channels = [1000 for i in range(8)]  # [1000; 2000]
-        self.raw_channels = [0 for i in range(8)] # [-500;  500]
+        self.raw_channels = [0 for i in range(8)]  # [-500;  500]
 
         self.overlay = overlay
         self.overlay.set_controls(self)
 
         self.keys = {}  # each key on the keyboard is a key on this dict either true or false
-
-
-
+        self.expo_rate = 0.5
         self.throttle = (w, s)
         self.pitch = (up_arrow, down_arrow)
         self.yaw = (a, d)
@@ -90,10 +89,12 @@ class Controls(threading.Thread):
                     print self.raw_channels
 
                     axis = [self.joystick.get_axis(axis1)*100 for axis1 in range(self.n_axes)]
-                    self.raw_channels[self.channel_map['throttle']] = 1500-5*axis[1]
-                    self.raw_channels[self.channel_map['yaw']] = 1500+5*axis[0]
-                    self.raw_channels[self.channel_map['pitch']] = 1500-5*axis[3]
-                    self.raw_channels[self.channel_map['roll']] = 1500+5*axis[2]
+
+                    self.raw_channels[self.channel_map['throttle']] = 1500-500 * self.expo(axis[1])
+                    self.raw_channels[self.channel_map['yaw']] = 1500+500 * self.expo(axis[0])
+                    self.raw_channels[self.channel_map['pitch']] = 1500-500 * self.expo(axis[3])
+                    self.raw_channels[self.channel_map['roll']] = 1500+500 * self.expo(axis[2])
+
                     self.buttons = [self.joystick.get_button(but)*100 for but in range(self.n_buttons)]
                     print self.buttons
 
@@ -101,6 +102,15 @@ class Controls(threading.Thread):
                         self.raw_channels[4] = 1950
                     elif self.buttons[7]:  # disarm#
                         self.raw_channels[4] = 1050
+
+    def expo(self, value):
+        x = abs(value) / 100.0
+        a = self.expo_rate
+        expo = a*x*x + (1-a) * x
+        if value >= 0 :
+            return expo
+        else:
+            return -expo
 
     def getkey(self, key):
         """ gets a key state either by numeric value or from mapped string"""
