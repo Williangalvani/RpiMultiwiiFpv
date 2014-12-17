@@ -52,21 +52,23 @@ class Sender(threading.Thread):
             else:
                 time.sleep(0.5)
 
-        print "air sender finalized!"
+        print "Air sender thread finalized!"
 
     def stop(self):
-        print "trying to stop air sender..."
+        print "trying to stop air sender thread..."
         self.running = False
 
     def queue(self, msg, data):
         self.request.append((msg, data))
 
+
 class Receiver(threading.Thread):
+
     def __init__(self, serial):
         threading.Thread.__init__(self)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        listen_addr = ("", 21567)
-        self.sock.bind(listen_addr)
+        listen_address = ("", 21567)
+        self.sock.bind(listen_address)
         self.running = True
         self.stream = False
         self.addr = None
@@ -79,25 +81,22 @@ class Receiver(threading.Thread):
                 data, addr = self.sock.recvfrom(1024)
                 self.addr = addr[0]
                 time.sleep(0.01)
-                self.treatData(data)
+                self.treat_data(data)
 
         print "air receiver finalized!"
 
-    def treatData(self, string):
+    def treat_data(self, string):
         data = None
         if string.startswith("req"):
             data = pkl.loads(string.split(">", 1)[1])
         elif string.startswith("per"):
             data = pkl.loads(string.split(">", 1)[1])
         else:
-            print string
+            print "unknown message:", string
 
-        # print data
         if str(RPI_COUNTER) in data:
-            # print data
             pass
         elif str(MSP_SET_RAW_RC) in data:
-            #print data
             self.serial.queue_rc(data[str(MSP_SET_RAW_RC)])
         elif str(MSP_PID) in data:
             self.serial.queue_pid_request()
@@ -106,7 +105,7 @@ class Receiver(threading.Thread):
         elif str(MSP_EEPROM_WRITE) in data:
             self.serial.queue_eeprom()
         else:
-            print "wtf?"
+            print "unknown data: ", data
 
     def stop(self):
         print "trying to stop air receiver..."
