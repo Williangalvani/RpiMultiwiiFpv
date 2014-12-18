@@ -90,13 +90,13 @@ class Overlay (Gtk.Window):
             self.draw_compass(cr)
             self.draw_status(cr)
             self.draw_altitude(cr)
-            # self.draw_rc(cr)
+            self.draw_rc(cr)
         else:
             self.draw_menu(cr)
 
     def draw_status(self,cr):
         _x = self.width - self.compass_x_off
-        _y = self.compass_y_off +200
+        _y = self.compass_y_off + 200
         if 'status' in self.receiver.data.keys():
             for i, flag in enumerate(self.receiver.data['status']):
                 cr.move_to(_x, _y + 30 * i)

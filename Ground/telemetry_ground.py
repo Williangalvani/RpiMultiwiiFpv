@@ -55,7 +55,8 @@ class Sender(threading.Thread):
 
     def run(self):
         while self.running:
-            time.sleep(0.05)
+            if not len(self.requested):
+                time.sleep(0.01)
             data = self.get_next_message()
             self.sock.sendto(data, self.rpi_address)
         print "ground sender finalized!"

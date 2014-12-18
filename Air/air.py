@@ -31,7 +31,8 @@ class Sender(threading.Thread):
                 if not self.addr:
                     self.addr = (self.receiver.addr, 21567)
 
-                time.sleep(0.01)
+                if not len(self.request):
+                    time.sleep(0.01)
 
                 if self.request:
                     request = self.request.pop(0)

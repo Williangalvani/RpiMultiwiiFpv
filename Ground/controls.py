@@ -30,7 +30,7 @@ class Controls(threading.Thread):
         self.overlay.set_controls(self)
 
         self.keys = {}  # each key on the keyboard is a key on this dict either true or false
-        self.expo_rate = 0.5
+        self.expo_rate = 0
         self.throttle = (w, s)
         self.pitch = (up_arrow, down_arrow)
         self.yaw = (a, d)
