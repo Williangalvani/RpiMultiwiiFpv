@@ -247,7 +247,7 @@ class Overlay (Gtk.Window):
         pass
 
     def update_screen(self):
-        if self.controls.getkey(36) or self.controls.getButton(10):
+        if self.controls.getButton('menu'):
             self.menu_on = not self.menu_on
             time.sleep(0.2)
             if self.menu_on:
@@ -312,18 +312,17 @@ class Overlay (Gtk.Window):
             self.throttle_trigger = None
 ###############################################
 
-        if self.controls.getkey('save') or self.controls.getButton(1):
+        if self.controls.getButton('save'):
             self.sender.queue_message(MSP_SET_PID, self.pids)
 
-        if self.controls.getkey('eeprom') or self.controls.getButton(2):
+        if self.controls.getButton('write'):
             self.sender.queue_message(MSP_EEPROM_WRITE)
-        self.sender.queue_message(MSP_PID,None)
+        self.sender.queue_message(MSP_PID, None)
         cr.set_font_size(20)
 
         time.sleep(0.1)
         try:
-
-           if not self.pids or self.controls.getkey('reload') or self.controls.getButton(3):
+           if not self.pids or self.controls.getButon('reload'):
                self.pids = self.receiver.data['pid']
         except Exception, e:
             print Exception, e

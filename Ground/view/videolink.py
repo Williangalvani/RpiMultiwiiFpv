@@ -74,10 +74,6 @@ class Video (Gtk.Window):
         self.decode.link(self.convert)
         self.convert.link(self.sink)
 
-    def set_controls(self,controls):
-        self.connect("key_press_event", controls.callback_press)
-        self.connect("key_release_event", controls.callback_release)
-
     def on_pad_added(self, element, pad):
         if "video" in name:
             sink_pad = self.depay.get_request_pad("sink")
