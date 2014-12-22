@@ -9,10 +9,11 @@ import cairo
 from gi.repository import Gtk
 from gi.repository import Gdk
 from gi.repository import GObject
-from math import sin,cos,radians, pi
+from math import sin, cos, radians, pi
 import time
 
-class Overlay (Gtk.Window):
+
+class Overlay(Gtk.Window):
     lens_x_angle = 53
     lens_y_angle = 22
     height = 0
@@ -39,7 +40,7 @@ class Overlay (Gtk.Window):
         self.sender = sender
         self.set_default_size(1366, 768)
 
-        #overlay transparency
+        # overlay transparency
         self.screen = self.get_screen()
         self.visual = self.screen.get_rgba_visual()
         if self.visual and self.screen.is_composited():
@@ -94,7 +95,7 @@ class Overlay (Gtk.Window):
         else:
             self.draw_menu(cr)
 
-    def draw_status(self,cr):
+    def draw_status(self, cr):
         _x = self.width - self.compass_x_off
         _y = self.compass_y_off + 200
         if 'status' in self.receiver.data.keys():
@@ -103,26 +104,26 @@ class Overlay (Gtk.Window):
                 cr.show_text(flag)
         cr.stroke()
 
-    def draw_altitude(self,cr):
+    def draw_altitude(self, cr):
         _x = self.width - 150
         _y = 80
         try:
             altitude, vario = self.receiver.get('attitude')[3:5]
             cr.move_to(_x, _y)
             cr.show_text("Alt: {0}M".format(altitude))
-            cr.move_to(_x, _y+20)
+            cr.move_to(_x, _y + 20)
             cr.show_text("Var: {0}M/s".format(vario))
             cr.stroke()
         except:
-             pass
+            pass
 
     def draw_rssi(self, cr):
-        cr.move_to(self.width-150, 50)
+        cr.move_to(self.width - 150, 50)
         cr.show_text("Wi-FI:{0}%".format(self.receiver.get('RSSI')))
         cr.stroke()
 
     def draw_compass(self, cr):
-        #cr.move_to(self.compass_x, self.compass_y)
+        # cr.move_to(self.compass_x, self.compass_y)
         try:
             yaw = -radians(self.receiver.get('attitude')[2])
         except:
@@ -131,25 +132,25 @@ class Overlay (Gtk.Window):
         compass_x = self.width - self.compass_x_off
         compass_y = self.compass_y_off
 
-        yoff = sin(yaw)*50
-        xoff = cos(yaw)*50
+        yoff = sin(yaw) * 50
+        xoff = cos(yaw) * 50
         cr.set_line_width(2)
-        cr.arc(compass_x, compass_y, 50, 0, 2*pi)
+        cr.arc(compass_x, compass_y, 50, 0, 2 * pi)
         cr.move_to(compass_x,
                    compass_y)
-        cr.line_to(compass_x+xoff,
-                   compass_y+yoff)
+        cr.line_to(compass_x + xoff,
+                   compass_y + yoff)
 
-        cr.move_to(compass_x+xoff*1.4 - 10,
-                   compass_y+yoff*1.3 + 10)
+        cr.move_to(compass_x + xoff * 1.4 - 10,
+                   compass_y + yoff * 1.3 + 10)
         cr.show_text("N")
         cr.stroke()
 
     def draw_horizon(self, cr):
         """Draws horizon lines on screen """
         self.width, self.height = self.get_size()
-        self.screen_mid_x = self.width/2
-        self.screen_mid_y = self.height/2
+        self.screen_mid_x = self.width / 2
+        self.screen_mid_y = self.height / 2
 
         try:
             roll = radians(self.receiver.data['attitude'][0])
@@ -165,15 +166,15 @@ class Overlay (Gtk.Window):
             cr.line_to(x2, y2)
             cr.stroke()
 
-        horizon_y = self.screen_mid_y - self.height * pitch/self.lens_y_angle
+        horizon_y = self.screen_mid_y - self.height * pitch / self.lens_y_angle
         length = 400.0
-        height = sin(roll)*length
-        width = cos(roll)*length
+        height = sin(roll) * length
+        width = cos(roll) * length
         cr.set_source_rgba(255, 255, 255, 255)
         cr.set_line_width(2)
         line_from_to(cr,
-                     self.screen_mid_x - width/2, horizon_y + height/2,
-                     self.screen_mid_x + width/2, horizon_y - height/2)
+                     self.screen_mid_x - width / 2, horizon_y + height / 2,
+                     self.screen_mid_x + width / 2, horizon_y - height / 2)
 
         cr.set_dash([10])
         cr.select_font_face("Lucida Typewriter", cairo.FONT_SLANT_NORMAL,
@@ -181,16 +182,16 @@ class Overlay (Gtk.Window):
         cr.set_font_size(20)
 
         for i in range(-10, 10):
-            y = horizon_y + 10.0/self.lens_y_angle * i * self.height
+            y = horizon_y + 10.0 / self.lens_y_angle * i * self.height
             if 0 < y < self.height:
-                points = [self.screen_mid_x - width/2, y + height/2,
-                          self.screen_mid_x + width/2, y - height/2]
+                points = [self.screen_mid_x - width / 2, y + height / 2,
+                          self.screen_mid_x + width / 2, y - height / 2]
                 line_from_to(cr, *points)
 
-                cr.move_to(points[0]-40, points[1])
-                cr.show_text("{0}".format(-i*10))
+                cr.move_to(points[0] - 40, points[1])
+                cr.show_text("{0}".format(-i * 10))
                 cr.move_to(points[2], points[3])
-                cr.show_text("{0}".format(-i*10))
+                cr.show_text("{0}".format(-i * 10))
                 cr.stroke()
         cr.set_dash([])
         self.draw_cross(cr)
@@ -209,20 +210,20 @@ class Overlay (Gtk.Window):
         cr.set_source_rgba(255, 255, 255, 255)
         cr.set_line_width(1)
         length = 100
-        cr.rectangle(self.rc_x,self.rc_y,length,length)
-        mid = self.rc_x + length/2, self.rc_y + length/2
-        xoff = (self.controls.get_channel('yaw')-1500)/500.0 * 50
-        yoff = (self.controls.get_channel('throttle')-1500)/500.0 * - 50
-        cr.move_to(mid[0],mid[1])
-        cr.line_to(mid[0]+xoff,mid[1]+yoff)
+        cr.rectangle(self.rc_x, self.rc_y, length, length)
+        mid = self.rc_x + length / 2, self.rc_y + length / 2
+        xoff = (self.controls.get_channel('yaw') - 1500) / 500.0 * 50
+        yoff = (self.controls.get_channel('throttle') - 1500) / 500.0 * - 50
+        cr.move_to(mid[0], mid[1])
+        cr.line_to(mid[0] + xoff, mid[1] + yoff)
         cr.stroke()
 
-        cr.rectangle(self.rc_x+length,self.rc_y,length,length)
-        mid = self.rc_x + length + length/2, self.rc_y + length/2
-        xoff = (self.controls.get_channel('roll')-1500)/500.0 * 50
-        yoff = (self.controls.get_channel('pitch')-1500)/500.0 * - 50
-        cr.move_to(mid[0],mid[1])
-        cr.line_to(mid[0]+xoff,mid[1]+yoff)
+        cr.rectangle(self.rc_x + length, self.rc_y, length, length)
+        mid = self.rc_x + length + length / 2, self.rc_y + length / 2
+        xoff = (self.controls.get_channel('roll') - 1500) / 500.0 * 50
+        yoff = (self.controls.get_channel('pitch') - 1500) / 500.0 * - 50
+        cr.move_to(mid[0], mid[1])
+        cr.line_to(mid[0] + xoff, mid[1] + yoff)
         cr.stroke()
 
 
@@ -234,7 +235,8 @@ class Overlay (Gtk.Window):
     def get_text(self):
         """ loads text string to show on top of the screen"""
         if 'attitude' in self.receiver.data:
-            return """<span font="Arial Black 20" foreground="white"> Attitude:{0}</span>""".format(self.receiver.data['attitude'])
+            return """<span font="Arial Black 20" foreground="white"> Attitude:{0}</span>""".format(
+                self.receiver.data['attitude'])
         else:
             return '---'
 
@@ -243,7 +245,7 @@ class Overlay (Gtk.Window):
         #
         # text = self.get_text()
         # if text is not None:
-        #     self.label.set_markup(text)
+        # self.label.set_markup(text)
         pass
 
     def update_screen(self):
@@ -262,40 +264,40 @@ class Overlay (Gtk.Window):
         cr.set_font_size(20)
 
 
-#################################################
+        # ################################################
         self.pitch_trigger = False
         pitch = self.controls.get_channel('pitch')
         # print "pitch: ", pitch
         if pitch > 1800 and not self.pitch_trigger:
             self.ypos -= 1
-            self.ypos%=10
+            self.ypos %= 10
             self.pitch_trigger = True
 
         elif pitch < 1200 and not self.pitch_trigger:
             self.ypos += 1
-            self.ypos%=10
+            self.ypos %= 10
             self.pitch_trigger = True
         else:
             self.pitch_trigger = None
 
-################################################
+        ################################################
         self.roll_trigger = False
         roll = self.controls.get_channel('roll')
         # print "roll:",roll
         if roll > 1800 and not self.roll_trigger:
             self.xpos += 1
-            self.xpos%=3
+            self.xpos %= 3
             self.roll_trigger = True
 
         elif roll < 1200 and not self.roll_trigger:
             self.xpos -= 1
-            self.xpos%=3
+            self.xpos %= 3
             self.roll_trigger = True
         else:
             self.roll_trigger = None
 
 
-################################################
+        ################################################
         self.throttle_trigger = False
         throttle = self.controls.get_channel('throttle')
         #print "throttle:" , throttle
@@ -310,7 +312,7 @@ class Overlay (Gtk.Window):
             self.throttle_trigger = True
         else:
             self.throttle_trigger = None
-###############################################
+        ###############################################
 
         if self.controls.getButton('save'):
             self.sender.queue_message(MSP_SET_PID, self.pids)
@@ -322,8 +324,8 @@ class Overlay (Gtk.Window):
 
         time.sleep(0.1)
         try:
-           if not self.pids or self.controls.getButon('reload'):
-               self.pids = self.receiver.data['pid']
+            if not self.pids or self.controls.getButon('reload'):
+                self.pids = self.receiver.data['pid']
         except Exception, e:
             print Exception, e
 
@@ -335,8 +337,8 @@ class Overlay (Gtk.Window):
             for i, letter in enumerate(['P', 'I', 'D']):
                 selected = line == self.ypos and i == self.xpos
                 selected_str = "->" if selected else ""
-                cr.move_to(self.menu_x + 150 + 100*i, self.menu_y + 30 * line)
-                cr.show_text('{0}{1}: {2}'.format(selected_str,letter, values[i]))
+                cr.move_to(self.menu_x + 150 + 100 * i, self.menu_y + 30 * line)
+                cr.show_text('{0}{1}: {2}'.format(selected_str, letter, values[i]))
             cr.move_to(100, 100)
             cr.show_text("Press 'f' or 1 to send new pid, 'g' or 2 to write to eeprom, 'h' or 3 to reload")
             cr.stroke()
