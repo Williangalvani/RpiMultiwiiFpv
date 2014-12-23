@@ -86,7 +86,6 @@ class Controls(threading.Thread):
             elif self.getButton('disarm'):  # disarm#
                 self.raw_channels[4] = 1050
 
-
             ##Trimming
             if self.directionals['up']:
                 self.channels_center['throttle'] += 1

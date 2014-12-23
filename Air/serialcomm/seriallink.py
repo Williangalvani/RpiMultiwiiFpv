@@ -47,19 +47,34 @@ class TelemetryReader():
         self.ser = None
         self.sender = None
         self.requested = []  # special messages on request
-        self.periodic = [(self.read_attitude, None),
-                         (self.read_attitude, None),
-                         (self.read_attitude, None),
-                         (self.get_status, None)]  # regular messages, sent one each cycle
+        self.periodic = [(self.simple_request, MSP_ATTITUDE),
+                         (self.simple_request, MSP_STATUS),
+                         (self.simple_request, MSP_IDENT),
+                         (self.simple_request, MSP_ATTITUDE),
+                         (self.get_box_names, None)]  # regular messages, sent one each cycle
+
         self.periodic_len = len(self.periodic)
         self.msg_counter = 0
         self.pid_names = []
         self.pid_list = []
-        self.status_flags = []
+        self.present_sensors = {}
         self.connected = False
         self.last_time_baro = time.time()
         self.box_names = None
         self.last_time_joystick_received = 0
+
+        # ######
+        #port from multiwiiconf.pde
+
+        ## ident
+        self.caps = {}
+        self.msp_version = 0
+        self.version = 0
+        self.type = None
+        ## status ##
+        self.status_flags = {}
+        self.status = {}
+        ######
 
     def reset_rc(self):
         print "rc timeout!"
@@ -101,7 +116,7 @@ class TelemetryReader():
         """sets it's udp socket sender"""
         self.sender = sender
 
-#### queuing methods... i don't like the way it looks.
+    # ### queuing methods... i don't like the way it looks.
     def queue_rc(self, rc_list):
         self.last_time_joystick_received = time.time()
         self.requested.append((self.write_rc, rc_list))
@@ -121,17 +136,21 @@ class TelemetryReader():
         if request not in self.requested:
             self.requested.append(request)
 
-##############   Writing methods:  #################################
+        ##############   Writing methods:  #################################
+
     def write_eeprom(self, data=None):
         print self.MSPquery(MSP_EEPROM_WRITE)
 
     def pid_write(self, data):
-            self.MSPquery8d(MSP_SET_PID, data)
+        self.MSPquery8d(MSP_SET_PID, data)
 
     def write_rc(self, rc_list):
         self.MSPquery16d(MSP_SET_RAW_RC, rc_list)
 
-#############################3
+    def simple_request(self, version):
+        self.MSPquery(version)
+
+    #############################3
 
     def read(self, n=1):
         """
@@ -197,6 +216,7 @@ class TelemetryReader():
         if checksum == received_checksum:
             if not data:
                 return True
+            self.evaluate_command(command, data)
             return data
         else:
             print ('lost packet!')
@@ -251,24 +271,6 @@ class TelemetryReader():
             return longitude, latitude
         return 0, 0
 
-    def read_attitude(self, _nothing=None):
-        answer = self.MSPquery(MSP_ATTITUDE)
-        roll, pitch, mag, altitude, vario = self.attitude
-        if answer:
-            roll = decode_16(answer[0:2]) / 10.0
-            pitch = decode_16(answer[2:4]) / 10.0
-            mag = decode_16(answer[4:6])
-
-        if (time.time() - self.last_time_baro) > 0.5:
-            answer = self.MSPquery(MSP_ALTITUDE)
-            if answer:
-                altitude = decode_32(answer[:4]) / 100.0
-                vario = decode_16(answer[4:6]) / 100.0
-                self.last_time_baro = time.time()
-
-        self.attitude = [roll, pitch, mag, altitude, vario]
-        return self.attitude
-
     def get_pid_names(self):
         if self.pid_names:
             return self.pid_names
@@ -276,7 +278,7 @@ class TelemetryReader():
             self.pid_names = "".join([chr(i) for i in self.MSPquery(MSP_PIDNAMES)]).split(";")[:-1]
         return self.pid_names
 
-    def get_box_names(self):
+    def get_box_names(self, nothing=None):
         if self.box_names:
             return self.box_names
         else:
@@ -295,6 +297,7 @@ class TelemetryReader():
         for i, name in enumerate(names):
             pid_list.append([name, pids[i]])
         self.pid_list = zip(names, pids)
+
         self.sender.queue(MSP_PID, self.pid_list)
         return self.pid_list
 
@@ -311,7 +314,7 @@ class TelemetryReader():
         o = bytearray('$M<')
         c = 0
         o += chr(size)
-        c ^= o[3]           # no payload
+        c ^= o[3]  # no payload
         o += chr(command)
         c ^= o[4]
         for value in data:
@@ -325,19 +328,52 @@ class TelemetryReader():
             time.sleep(0.10)
         return answer
 
-    def get_status(self, extra=None):
-        """
-        reads status data from Multiwii
-        and tries to reassemble the data, poorly
-        """
-        data = self.MSPquery(MSP_STATUS)
-        micros = encode_16(data[:2])
-        status_flags = []
-        status = ('Stable', '', '', '', '', '', '1', '2', '3', '3', '4', '5', '6', '7', '8', '9', 'Armed')
-        flags = data[4] + data[5] * 256 + data[6] * 256 * 256 + data[7] * 256 * 256 * 256
-        for i, flag in enumerate(status):
-            if (flags >> i) % 2:
-                if len(flag):
-                    status_flags.append(flag)
-        self.status_flags = status_flags
-        return status_flags
+    def evaluate_command(self, command, data):
+        #print data, command
+        if command == MSP_IDENT:
+            self.version = data[0] / 100.0
+            self.type = data[1], Multitypes[data[1]]
+            self.msp_version = data[2]
+            self.caps = decode_32(data[3:7])  #capability|DYNBAL<<2|FLAP<<3;
+            # print self.version, self.type, self.msp_version, self.caps
+
+        elif command == MSP_STATUS:
+            if self.box_names:
+                cycleTime = decode_16(data[0:2])
+                i2cError = decode_16(data[2:4])
+                present = decode_16(data[4:6])
+                mode = decode_32(data[6:10])
+                self.status = {}
+                self.present_sensors['acc'] = bool(present & 1)
+                self.present_sensors['baro'] = bool(present & 2)
+                self.present_sensors['mag'] = bool(present & 4)
+                self.present_sensors['gps'] = bool(present & 8)
+                self.present_sensors['sonar'] = bool(present & 16)
+
+                self.status['cycleTime'] = cycleTime
+                self.status['i2cError'] = i2cError
+                self.status_flags = [box for i, box in enumerate(self.box_names) if mode & (1 << i)]
+                # print self.status, self.status_flags
+        elif command == MSP_RAW_IMU:
+            print "MSP_RAW_IMU not implemented!"
+        elif command == MSP_SERVO:
+            print "MSP_SERVO not implemented!"
+        elif command == MSP_MOTOR:
+            print "MSP_MOTOR not implemented!"
+        elif command == MSP_RC:
+            print "MSP_RC not implemented!"
+        elif command == MSP_ATTITUDE:
+            roll, pitch, mag, altitude, vario = self.attitude
+            answer = data
+            if answer:
+                roll = decode_16(answer[0:2]) / 10.0
+                pitch = decode_16(answer[2:4]) / 10.0
+                mag = decode_16(answer[4:6])
+            if (time.time() - self.last_time_baro) > 0.5:
+                answer = self.MSPquery(MSP_ALTITUDE)      ### FIX THIS!!!!
+                if answer:
+                    altitude = decode_32(answer[:4]) / 100.0
+                    vario = decode_16(answer[4:6]) / 100.0
+                    self.last_time_baro = time.time()
+
+            self.attitude = [roll, pitch, mag, altitude, vario]
