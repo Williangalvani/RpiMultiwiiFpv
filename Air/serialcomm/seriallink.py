@@ -51,6 +51,7 @@ class TelemetryReader():
                          (self.simple_request, MSP_STATUS),
                          (self.simple_request, MSP_IDENT),
                          (self.simple_request, MSP_ATTITUDE),
+                         (self.simple_request, MSP_BOX),
                          (self.get_box_names, None)]  # regular messages, sent one each cycle
 
         self.periodic_len = len(self.periodic)
@@ -74,7 +75,8 @@ class TelemetryReader():
         ## status ##
         self.status_flags = {}
         self.status = {}
-        ######
+        ######boxes
+        self.boxes = {}
 
     def reset_rc(self):
         print "rc timeout!"
@@ -117,6 +119,9 @@ class TelemetryReader():
         self.sender = sender
 
     # ### queuing methods... i don't like the way it looks.
+    def queue(self, code):
+        self.requested.append((self.simple_request, code))
+
     def queue_rc(self, rc_list):
         self.last_time_joystick_received = time.time()
         self.requested.append((self.write_rc, rc_list))
@@ -136,10 +141,18 @@ class TelemetryReader():
         if request not in self.requested:
             self.requested.append(request)
 
+    def queue_set_box(self, data):
+        self.requested.append((self.write_box, data))
+
         ##############   Writing methods:  #################################
 
     def write_eeprom(self, data=None):
         print self.MSPquery(MSP_EEPROM_WRITE)
+
+    def write_box(self, data):
+        print "writing box"
+        print data
+        self.MSPquery16d(MSP_SET_BOX, data)
 
     def pid_write(self, data):
         self.MSPquery8d(MSP_SET_PID, data)
@@ -174,14 +187,14 @@ class TelemetryReader():
         start = time.time()
         while command != expected_command:
             if time.time() > start + 0.5:
-                print "timeout"
+                print "timeout waiting for", command
                 return None
             if len(self.buffer) > 15:
                 self.buffer = "$M>" + self.buffer.rsplit("$M>", 1)[-1]
             header = "000"
             while "$M>" not in header:
                 if time.time() > start + 0.5:
-                    print "timeout"
+                    print "timeout waiting for header after requesting a ", expected_command
                     return None
                 try:
                     new = self.ser.read(1)
@@ -377,3 +390,12 @@ class TelemetryReader():
                     self.last_time_baro = time.time()
 
             self.attitude = [roll, pitch, mag, altitude, vario]
+
+        elif command == MSP_BOX:
+            if self.box_names:
+                for j, name in enumerate(self.box_names):
+                    self.boxes[name] = [False for x in range(12)]
+                    for i in range(12):
+                        number = decode_16(data[j*2:j*2+2])
+                        self.boxes[name][i] = (1 << i) & number > 0
+            self.sender.queue(MSP_BOX, self.boxes)

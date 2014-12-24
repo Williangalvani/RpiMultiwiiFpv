@@ -25,7 +25,10 @@ class Controls(threading.Thread):
                             'write': 2,
                             'reload': 3,
                             'arm': 6,
-                            'disarm': 8}
+                            'disarm': 8,
+                            'changemenu':9,
+                            'changebox': 2,
+                            'box_write':3}
 
         self.directionals = {'up': False,
                              'down': False,

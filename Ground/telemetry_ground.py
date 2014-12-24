@@ -89,13 +89,14 @@ class Receiver(threading.Thread):
             self.data['attitude'] = pkl.loads(string.split(">", 1)[1])
         elif string.startswith("stat"):
             self.data['status'] = pkl.loads(string.split(">", 1)[1])
-
         elif string.startswith("rssi"):
             self.data['RSSI'] = pkl.loads(string.split(">", 1)[1])
         elif string.startswith("resp"):
             data = pkl.loads(string.split(">", 1)[1])
             if MSP_PID in data:
                 self.data['pid'] = data[MSP_PID]
+            elif MSP_BOX in data:
+                self.data['box'] = data[MSP_BOX]
         else:
             print "unknown message:", string
 

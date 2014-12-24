@@ -24,8 +24,12 @@ class Overlay(Gtk.Window):
     compass_y_off = 200
     controls = None
     menu_on = False
+    menu_selected = 1
     menu_x = 100
     menu_y = 200
+    changed_menu = False
+    changed_option = False
+    boxes = {}
 
     rc_x = 50
     rc_y = 300
@@ -262,7 +266,20 @@ class Overlay(Gtk.Window):
 
         self.sender.queue_message(MSP_PID)
         cr.set_font_size(20)
+        max_x_pos = 0
+        max_y_pos = 0
+        if self.menu_selected == 1:
+            max_x_pos = 3
+            max_y_pos = 10
+        elif self.menu_selected == 2:
+            max_x_pos = 12
+            max_y_pos = 10
 
+        if self.controls.getButton('changemenu') and not self.changed_menu:
+            self.menu_selected = (self.menu_selected + 1) % 3
+            self.changed_menu = True
+        if not self.controls.getButton('changemenu'):
+            self.changed_menu = False
 
         # ################################################
         self.pitch_trigger = False
@@ -270,12 +287,12 @@ class Overlay(Gtk.Window):
         # print "pitch: ", pitch
         if pitch > 1800 and not self.pitch_trigger:
             self.ypos -= 1
-            self.ypos %= 10
+            self.ypos %= max_y_pos
             self.pitch_trigger = True
 
         elif pitch < 1200 and not self.pitch_trigger:
             self.ypos += 1
-            self.ypos %= 10
+            self.ypos %=  max_y_pos
             self.pitch_trigger = True
         else:
             self.pitch_trigger = None
@@ -286,62 +303,98 @@ class Overlay(Gtk.Window):
         # print "roll:",roll
         if roll > 1800 and not self.roll_trigger:
             self.xpos += 1
-            self.xpos %= 3
+            self.xpos %= max_x_pos
             self.roll_trigger = True
 
         elif roll < 1200 and not self.roll_trigger:
             self.xpos -= 1
-            self.xpos %= 3
+            self.xpos %= max_x_pos
             self.roll_trigger = True
         else:
             self.roll_trigger = None
 
+        if self.menu_selected == 1:
 
-        ################################################
-        self.throttle_trigger = False
-        throttle = self.controls.get_channel('throttle')
-        #print "throttle:" , throttle
-        if throttle > 1800 and not self.throttle_trigger:
-            value = int(self.pids[self.ypos][1][self.xpos]) + 1
-            self.pids[self.ypos][1][self.xpos] = value
-            self.throttle_trigger = True
+            ################################################
+            self.throttle_trigger = False
+            throttle = self.controls.get_channel('throttle')
+            #print "throttle:" , throttle
+            if throttle > 1800 and not self.throttle_trigger:
+                value = int(self.pids[self.ypos][1][self.xpos]) + 1
+                self.pids[self.ypos][1][self.xpos] = value
+                self.throttle_trigger = True
 
-        elif throttle < 1200 and not self.throttle_trigger:
-            value = int(self.pids[self.ypos][1][self.xpos]) - 1
-            self.pids[self.ypos][1][self.xpos] = value
-            self.throttle_trigger = True
-        else:
-            self.throttle_trigger = None
-        ###############################################
+            elif throttle < 1200 and not self.throttle_trigger:
+                value = int(self.pids[self.ypos][1][self.xpos]) - 1
+                self.pids[self.ypos][1][self.xpos] = value
+                self.throttle_trigger = True
+            else:
+                self.throttle_trigger = None
+            ###############################################
 
-        if self.controls.getButton('save'):
-            self.sender.queue_message(MSP_SET_PID, self.pids)
+            if self.controls.getButton('save'):
+                self.sender.queue_message(MSP_SET_PID, self.pids)
 
-        if self.controls.getButton('write'):
-            self.sender.queue_message(MSP_EEPROM_WRITE)
-        self.sender.queue_message(MSP_PID, None)
-        cr.set_font_size(20)
+            if self.controls.getButton('write'):
+                self.sender.queue_message(MSP_EEPROM_WRITE)
+            self.sender.queue_message(MSP_PID, None)
+            cr.set_font_size(20)
 
-        time.sleep(0.1)
-        try:
-            if not self.pids or self.controls.getButon('reload'):
-                self.pids = self.receiver.data['pid']
-        except Exception, e:
-            print Exception, e
+            time.sleep(0.1)
+            try:
+                if not self.pids or self.controls.getButton('reload'):
+                    self.pids = self.receiver.data['pid']
+            except Exception, e:
+                print Exception, e
 
-        for line, pid in enumerate(self.pids):
-            cr.move_to(self.menu_x, self.menu_y + 30 * line)
-            name, values = pid
-            string = name
-            cr.show_text(string)
-            for i, letter in enumerate(['P', 'I', 'D']):
-                selected = line == self.ypos and i == self.xpos
-                selected_str = "->" if selected else ""
-                cr.move_to(self.menu_x + 150 + 100 * i, self.menu_y + 30 * line)
-                cr.show_text('{0}{1}: {2}'.format(selected_str, letter, values[i]))
-            cr.move_to(100, 100)
-            cr.show_text("Press 'f' or 1 to send new pid, 'g' or 2 to write to eeprom, 'h' or 3 to reload")
-            cr.stroke()
+            for line, pid in enumerate(self.pids):
+                cr.move_to(self.menu_x, self.menu_y + 30 * line)
+                name, values = pid
+                string = name
+                cr.show_text(string)
+                for i, letter in enumerate(['P', 'I', 'D']):
+                    selected = line == self.ypos and i == self.xpos
+                    selected_str = "->" if selected else ""
+                    cr.move_to(self.menu_x + 150 + 100 * i, self.menu_y + 30 * line)
+                    cr.show_text('{0}{1}: {2}'.format(selected_str, letter, values[i]))
+                cr.move_to(100, 100)
+                cr.show_text("Press 'f' or 1 to send new pid, 'g' or 2 to write to eeprom, 'h' or 3 to reload")
+                cr.stroke()
+
+        elif self.menu_selected == 2:
+            if 'box' in self.receiver.data:
+                if not self.boxes:
+                    self.boxes = self.receiver.data['box']
+                for i in range(4):
+                    cr.move_to(self.menu_x + 200 + 150 * i, self.menu_y - 70)
+                    cr.show_text("AUX" + str(i+1))
+                    for j, text in enumerate(["lo", "mid", "hi"]):
+                        cr.move_to(self.menu_x + 200 + 150 * i + 50 * j, self.menu_y - 25)
+                        cr.show_text(text)
+                for i, line in enumerate(self.boxes.keys()):
+                    cr.move_to(self.menu_x, self.menu_y + 30 * i)
+                    cr.show_text(line)
+                    for j in range(12):
+                        selected = "->" if self.xpos == j and self.ypos == i else ""
+                        cr.move_to(self.menu_x + 200 + 50*j, self.menu_y + 30 * i)
+                        cr.show_text(selected + ("X" if self.boxes[line][j] else "-"))
+
+                cr.move_to(self.menu_x,self.menu_y-100)
+                cr.show_text("Press 1 to send new config, 2 to change, 3 to write")
+
+                cr.stroke()
+
+                if self.controls.getButton('changebox') and not self.changed_option:
+                    self.changed_option = True
+                    self.boxes[self.boxes.keys()[self.ypos]][self.xpos] = not self.boxes[self.boxes.keys()[self.ypos]][self.xpos]
+                if not self.controls.getButton('changebox'):
+                    self.changed_option = False
+
+                if self.controls.getButton('box_write'):
+                    self.sender.queue_message(MSP_EEPROM_WRITE)
+                if self.controls.getButton('save'):
+                    self.sender.queue_message(MSP_SET_BOX, self.boxes)
+
 
     def update_overlay(self):
         """Callback function for timer"""

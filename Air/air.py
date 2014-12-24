@@ -105,6 +105,18 @@ class Receiver(threading.Thread):
             self.serial.queue_pid_write(data[str(MSP_SET_PID)])
         elif str(MSP_EEPROM_WRITE) in data:
             self.serial.queue_eeprom()
+        elif str(MSP_BOX) in data:
+            self.serial.queue(MSP_BOX)
+        elif str(MSP_SET_BOX) in data:
+            payload = []
+            boxes = data[str(MSP_SET_BOX)]
+            for name in self.serial.box_names:
+                number = 0
+                for index, value in enumerate(boxes[name]):
+                    number += (1 if value else 0) << index
+                payload.append(number)
+
+            self.serial.queue_set_box(payload)
         else:
             print "unknown data: ", data
 
