@@ -89,6 +89,15 @@ class Overlay(Gtk.Window):
         cr.set_operator(cairo.OPERATOR_SOURCE)
         cr.paint()
         cr.set_operator(cairo.OPERATOR_OVER)
+        if not self.controls.joystick_present:
+            print "not present!"
+            cr.select_font_face("Lucida Typewriter", cairo.FONT_SLANT_NORMAL,
+                            cairo.FONT_WEIGHT_NORMAL)
+            cr.set_font_size(20)
+            cr.set_source_rgba(255,255,255,255)
+            cr.move_to(self.screen_mid_x- 200,self.screen_mid_y)
+            cr.show_text("Joystick disconnected!")
+            cr.stroke()
         if not self.menu_on:
             self.draw_horizon(cr)
             self.draw_rssi(cr)
