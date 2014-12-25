@@ -85,7 +85,7 @@ class TelemetryReader():
     def loop(self):
         while self.run:
             try:
-                # keeping hardcoded, since it's the rpi builting serial.
+                # keeping hardcoded, since it's the rpi built-in serial.
                 self.ser = serial.Serial("/dev/ttyAMA0", 115200, timeout=1)
                 self.ser.flushInput()
                 self.connected = True

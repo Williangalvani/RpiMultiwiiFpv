@@ -28,7 +28,9 @@ class Controls(threading.Thread):
                             'disarm': 8,
                             'changemenu':9,
                             'changebox': 2,
-                            'box_write':3}
+                            'box_write':3,
+                            'baro_on':5,
+                            'baro_off':7}
 
         self.directionals = {'up': False,
                              'down': False,
@@ -76,7 +78,7 @@ class Controls(threading.Thread):
                 ## process axis
                 axis = [self.joystick.get_axis(axis1) * 100 for axis1 in range(self.n_axes)]
 
-                self.raw_channels[map['throttle']] = centers['throttle'] + 500 * expo(axis[1])
+                self.raw_channels[map['throttle']] = centers['throttle'] - 500 * expo(axis[1])
                 self.raw_channels[map['yaw']] =      centers['yaw'] +      500 * expo(axis[0])
                 self.raw_channels[map['pitch']] =    centers['pitch'] -    500 * expo(axis[3])
                 self.raw_channels[map['roll']] =     centers['roll'] +     500 * expo(axis[2])
@@ -97,6 +99,11 @@ class Controls(threading.Thread):
                     self.raw_channels[4] = 1950
                 elif self.getButton('disarm'):  # disarm#
                     self.raw_channels[4] = 1050
+
+                if self.getButton('baro_on'):
+                    self.raw_channels[5] = 1950
+                elif self.getButton('baro_off'):  # disarm#
+                    self.raw_channels[5] = 1050
 
                 ##Trimming
                 if self.directionals['up']:
