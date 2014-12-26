@@ -78,10 +78,10 @@ class Controls(threading.Thread):
                 ## process axis
                 axis = [self.joystick.get_axis(axis1) * 100 for axis1 in range(self.n_axes)]
 
-                self.raw_channels[map['throttle']] = centers['throttle'] - 500 * expo(axis[1])
-                self.raw_channels[map['yaw']] =      centers['yaw'] +      500 * expo(axis[0])
-                self.raw_channels[map['pitch']] =    centers['pitch'] -    500 * expo(axis[3])
-                self.raw_channels[map['roll']] =     centers['roll'] +     500 * expo(axis[2])
+                self.raw_channels[map['throttle']] = expo(centers['throttle'], -axis[1])
+                self.raw_channels[map['yaw']] =      expo(centers['yaw'], axis[0])
+                self.raw_channels[map['pitch']] =    expo(centers['pitch'], -axis[3])
+                self.raw_channels[map['roll']] =     expo(centers['roll'], axis[2])
 
                 ## process buttons
                 self.buttons = [self.joystick.get_button(but) * 100 for but in range(self.n_buttons)]
@@ -115,14 +115,14 @@ class Controls(threading.Thread):
                 if self.directionals['right']:
                     self.channels_center['yaw'] += 1
 
-    def expo(self, value):
+    def expo(self, center, value):
         x = abs(value) / 100.0
         a = self.expo_rate
         expo = a * x * x + (1 - a) * x
         if value >= 0:
-            return expo
+            return center + expo * (2000 - center )
         else:
-            return -expo
+            return center - expo* (center - 1000 )
 
     def getButton(self, n):
         if isinstance(n, basestring):
