@@ -1,5 +1,6 @@
 file=./file.sh
 process=0
+
 while [ 1 ]; do
   if [ -f "$file" ]; then
 

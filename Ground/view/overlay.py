@@ -15,7 +15,7 @@ import time
 
 class Overlay(Gtk.Window):
     lens_x_angle = 53
-    lens_y_angle = 22
+    lens_y_angle = 32
     height = 0
     width = 0
     screen_mid_x = 0
