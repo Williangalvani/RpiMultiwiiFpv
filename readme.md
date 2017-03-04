@@ -1,3 +1,11 @@
+#RpiMultiWiiFpv
+
+This is an attempt at a wi-fi only fpv setup using MultiWii, Raspberry Pi B, 
+and a laptop with joystick.
+
+[![Youtube playlist](http://galvanicloop.com/media/other/rpi.png)](https://www.youtube.com/playlist?list=PLwy4WgVQICvmDAN-mdecU3r97ztXYPF8n)
+
+
 ##Requirements:##
 ###On the Rpi:
 - Pyserial
