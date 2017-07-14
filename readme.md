@@ -1,4 +1,4 @@
-#RpiMultiWiiFpv
+# RpiMultiWiiFpv
 
 This is an attempt at a wi-fi only fpv setup using MultiWii, Raspberry Pi B,
 and a laptop with joystick. It streams the video via UDP, and both reads telemetry and sends joystick inputs via another UDP socket.
@@ -10,22 +10,22 @@ The video delay was around 200ms, joystick input probably less, However a joysti
 deadzone, with lead me to [build a proper openLRS radio](http://galvanicloop.com/blog/post/10/frankstxein-opentx-openlrsng-telemetry)
 
 
-##Requirements:##
-###On the Rpi:
+## Requirements:
+### On the Rpi:
 - Pyserial
 - gstreamer-1.0
 - rpi camera enabled
 
-###On the ground:
+### On the ground:
 - gstreamer-1.0
 
-##Usage:##
-###On the Pi:###
+## Usage:
+### On the Pi:
 *`cd fpv/`*
 
 *`python air.py`*
 
-###On the Pc:###
+### On the Pc:
 *`cd fpv/`*
 
 *`python ground.py <raspberry IP>`*
